@@ -52,3 +52,11 @@
 - **Evidence:** every editor-built click/press held the button for a fixed 15 ms before releasing, so one click per pass could never exceed ~66/s. A probe ruled out timer throttling in the background: a windowless process outside the agent package kept 67 waits/s of 15 ms for 20 s, with and without the power-throttling opt-out.
 - **Fix (1.0.1):** presses and clicks are instant by default (down and up in one `SendInput` call, as AutoHotkey's SendInput mode does), with a per-step "Hold time (ms)". Unlimited runs are still capped at one pass per millisecond.
 - **Not yet explained:** the decline from 65 to 35. Deduction only: something on the machine slowing `SendInput` (another app's low-level hook) or the CPS page itself. Each run now logs its rate, `SendInput` average/max and wait lateness to `clicket.log`; read that line from a slow run before changing anything else.
+
+## Held hotkey restarted "While held" macros every ~67 ms (1.0.1–1.0.2, user report "still 55 CPS")
+
+- **Evidence:** the user's `clicket.log` showed runs of 0.04 s, 0 passes, one after another, while F13 was held; and `SendInput` averaging 10–13 ms per call.
+- **Cause:** the 1.0.1 secure-desktop fix asked `GetAsyncKeyState` whether a swallowed hotkey was still down. A key the hook swallows never reaches Windows' key state, so it always reads "up", and every auto-repeat looked like a new press after a lost release: stop, then start.
+- **Fix (1.0.3):** a lost release is detected by silence instead: a repeat more than 1.5 s after the previous one (auto-repeat runs every ~33 ms after at most 1 s).
+- **Open:** the 10–13 ms per `SendInput` comes from some other process's low-level hook (Windows waits for every hook before returning). It caps clicks near 75/s on that machine; identify it by measuring with suspects closed.
+- **Measured (authorized probe, real desktop):** injected mouse move 0.08 ms, key down+up 0.9 ms, **left button down 10.3 ms** (up ~0.1 ms). A low-level mouse hook in another process does ~10 ms of work per button press; Clicket cannot bypass it (neither can AutoHotkey).

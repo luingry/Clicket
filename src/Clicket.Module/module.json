@@ -1,6 +1,6 @@
 {
   "id": "clicket",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "entryAssembly": "Clicket.Module.dll",
   "entryType": "Clicket.Module.ClicketModule",
   "sdkVersion": 1,
@@ -8,6 +8,12 @@
   "loadMode": "memory",
   "window": true,
   "releaseNotes": [
+    {
+      "version": "1.0.3",
+      "notes": [
+        "Holding a hotkey no longer restarts a While held macro on every key repeat, or flips a Toggle macro on and off."
+      ]
+    },
     {
       "version": "1.0.2",
       "notes": [

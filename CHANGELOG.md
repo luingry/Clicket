@@ -2,6 +2,12 @@
 
 All notable changes to Clicket are recorded here, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, with [semantic versioning](https://semver.org/).
 
+## [1.0.3]
+
+### Fixed
+
+- Holding a hotkey no longer stops and restarts a "While held" macro on every key repeat (and no longer flips a "Toggle" macro on and off), which cut clicks per second roughly in half in 1.0.1 and 1.0.2.
+
 ## [1.0.2]
 
 ### Added

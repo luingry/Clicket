@@ -40,6 +40,8 @@ internal sealed class InputHook : IDisposable
     private readonly ManualResetEventSlim _ready = new ManualResetEventSlim(false);
     private readonly bool[] _suppressed = new bool[256];
     private readonly bool[] _modifierDown = new bool[256];
+    private readonly long[] _lastDown = new long[256];
+    private static readonly long LostReleaseTicks = Stopwatch.Frequency * 3 / 2;
     private uint _threadId;
     private IntPtr _keyboardHook, _mouseHook;
     private volatile HashSet<Hotkey> _triggers = new HashSet<Hotkey>();
@@ -189,11 +191,15 @@ internal sealed class InputHook : IDisposable
             // The secure desktop (Ctrl+Alt+Del, Win+L, UAC) hides key-ups from every hook: re-read the modifiers before matching,
             // and a "repeat" of a swallowed key that Windows says is up is really a new press after a lost release.
             SeedModifiers();
-            if (_suppressed[vk] && (NativeMethods.GetAsyncKeyState(vk) & 0x8000) == 0)
+            // A swallowed key never reaches Windows' key state, so the release can't be asked of GetAsyncKeyState
+            // (that made every auto-repeat of a held hotkey look like a new press). Auto-repeat arrives every ~33 ms
+            // after at most a 1 s delay, so a "repeat" after a longer silence is a new press whose release was lost.
+            if (_suppressed[vk] && now - _lastDown[vk] > LostReleaseTicks)
             {
                 _suppressed[vk] = false;
                 Push(new HookEvent { Kind = HookEventKind.TriggerUp, TriggerKey = vk });
             }
+            _lastDown[vk] = now;
         }
         if (down)
         {
