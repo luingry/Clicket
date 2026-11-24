@@ -2,6 +2,22 @@
 
 All notable changes to Clicket are recorded here, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, with [semantic versioning](https://semver.org/).
 
+## [1.1.2]
+
+### Added
+
+- Image block: looks for a picture on every monitor and, once the match reaches the threshold you set, runs the steps inside it. Optionally clicks the picture first. A check interval sets how often it looks again, and an optional time limit skips the block when the picture never shows up.
+- Capture the picture straight from the screen by dragging around it, paste the one copied with Ctrl + C, or open an image file; **Test now** shows how well it matches the screen right now.
+- Run log: a small window, opened from the clock button next to Play, shows the last 60 seconds of a macro's execution live, with every step, image search and problem, to the millisecond.
+
+### Changed
+
+- The warning for a block without its end now covers image blocks as well as loops.
+
+### Fixed
+
+- The mouse wheel no longer scrolls Clicket's lists and panels far too much with smooth-scrolling tools (such as SmoothMice), high-resolution wheels or precision touchpads: each small wheel step now scrolls its share of a notch instead of a whole one.
+
 ## [1.0.3]
 
 ### Fixed

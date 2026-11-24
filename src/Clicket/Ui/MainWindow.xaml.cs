@@ -74,6 +74,7 @@ public partial class MainWindow : Window
         {
             Host.RunStateChanged -= OnRunStateChanged;
             Strings.LanguageChanged -= OnLanguageChanged;
+            foreach (var log in _logWindows.Values.ToList()) log.Close();
         };
         PreviewKeyDown += OnWindowKeyDown;
 
@@ -711,7 +712,7 @@ public partial class MainWindow : Window
     {
         _current?.Refresh();
         Host.LibraryChanged();
-        if (item.IsLoopMarker || item.Step.Kind == StepKind.Delay || item.Step.Kind == StepKind.Text || item.Step.Kind == StepKind.Path)
+        if (item.IsLoopMarker || item.IsImageMarker || item.Step.Kind == StepKind.Delay || item.Step.Kind == StepKind.Text || item.Step.Kind == StepKind.Path)
         {
             ScaleBars();
             UpdateSummary();
@@ -750,6 +751,17 @@ public partial class MainWindow : Window
                 steps.Insert(at, new Step { Kind = StepKind.LoopStart, Count = 2 });
                 steps.Insert(at + 1, new Step { Kind = StepKind.LoopEnd });
                 break;
+            case "Image":
+                // Like a loop: wraps a multi-step selection, otherwise starts as an empty block.
+                var chosen = SelectedIndexes();
+                if (chosen.Count > 1)
+                {
+                    WrapInBlock(chosen[0], chosen[chosen.Count - 1], StepKind.ImageStart);
+                    return;
+                }
+                steps.Insert(at, new Step { Kind = StepKind.ImageStart });
+                steps.Insert(at + 1, new Step { Kind = StepKind.ImageEnd });
+                break;
             case "Command":
                 steps.Insert(at, new Step { Kind = StepKind.Command, Hidden = true });
                 break;
@@ -779,14 +791,37 @@ public partial class MainWindow : Window
         WrapInLoop(selected[0], selected[selected.Count - 1]);
     }
 
-    private void WrapInLoop(int first, int last)
+    private void WrapInLoop(int first, int last) => WrapInBlock(first, last, StepKind.LoopStart);
+
+    private void WrapInBlock(int first, int last, StepKind start)
     {
         if (_current == null) return;
         var steps = _current.Macro.Steps;
-        steps.Insert(last + 1, new Step { Kind = StepKind.LoopEnd });
-        steps.Insert(first, new Step { Kind = StepKind.LoopStart, Count = 2 });
+        steps.Insert(last + 1, new Step { Kind = MacroProgram.EndOf(start) });
+        steps.Insert(first, start == StepKind.LoopStart ? new Step { Kind = StepKind.LoopStart, Count = 2 } : new Step { Kind = start });
         StepsChanged(new[] { first });
         StepEditor.FocusPrimaryField();
+    }
+
+    // ======================================================== Run log
+
+    private readonly Dictionary<string, RunLogWindow> _logWindows = new Dictionary<string, RunLogWindow>();
+
+    /// <summary>One small log window per macro; asking again brings the open one forward.</summary>
+    private void OnOpenLog(object sender, RoutedEventArgs e)
+    {
+        if (_current == null) return;
+        var macro = _current.Macro;
+        if (_logWindows.TryGetValue(macro.Id, out var open))
+        {
+            if (open.WindowState == WindowState.Minimized) open.WindowState = WindowState.Normal;
+            open.Activate();
+            return;
+        }
+        var window = new RunLogWindow(macro);
+        _logWindows[macro.Id] = window;
+        window.Closed += (s, args) => _logWindows.Remove(macro.Id);
+        window.ShowNear(this);
     }
 
     private void OnMoveUp(object sender, RoutedEventArgs e) => MoveSelection(-1);

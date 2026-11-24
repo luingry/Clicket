@@ -76,6 +76,7 @@ public partial class App : Application
         DispatcherUnhandledException += OnUnhandled;
         AppDomain.CurrentDomain.UnhandledException += (s, args) => WriteCrashLog((Exception)args.ExceptionObject);
         TaskScheduler.UnobservedTaskException += (s, args) => { WriteCrashLog(args.Exception); args.SetObserved(); };
+        WheelScrolling.Install();
 
         // Diagnostics run before the mutex and the settings, so they cannot persist anything.
         if (e.Args.Length >= 2 && (e.Args[0] == "--export-icon" || e.Args[0] == "--snapshot"))

@@ -25,6 +25,8 @@
     <SolidColorBrush x:Key="Brush.Scrim" Color="#B30E0E0D" po:Freeze="True" />
     <!-- Almost clear: still catches clicks over every monitor while picking a position. -->
     <SolidColorBrush x:Key="Brush.PickVeil" Color="#0A000000" po:Freeze="True" />
+    <!-- Region capture: the frozen screen is dimmed outside the selection. -->
+    <SolidColorBrush x:Key="Brush.RegionVeil" Color="#8C000000" po:Freeze="True" />
 
     <!-- Text -->
     <SolidColorBrush x:Key="Brush.Text.Primary" Color="#F3F0EA" po:Freeze="True" />
@@ -69,6 +71,8 @@
     <SolidColorBrush x:Key="Brush.Cat.Script.Soft" Color="#24E57DB4" po:Freeze="True" />
     <SolidColorBrush x:Key="Brush.Cat.Open" Color="#6FA8F0" po:Freeze="True" />
     <SolidColorBrush x:Key="Brush.Cat.Open.Soft" Color="#246FA8F0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Image" Color="#C9D64F" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Image.Soft" Color="#24C9D64F" po:Freeze="True" />
 
     <!-- Interaction -->
     <SolidColorBrush x:Key="Brush.Overlay.Hover" Color="#0FFFFFFF" po:Freeze="True" />
@@ -146,6 +150,11 @@
     <sys:Double x:Key="Size.PadWidth">220</sys:Double>
     <sys:Double x:Key="Size.AppIcon">56</sys:Double>
     <sys:Double x:Key="Size.IconStroke">1.6</sys:Double>
+    <sys:Double x:Key="Size.ImagePreview">120</sys:Double>
+    <sys:Double x:Key="Size.RegionStroke">1.5</sys:Double>
+    <sys:Double x:Key="Size.LogWidth">560</sys:Double>
+    <sys:Double x:Key="Size.LogHeight">440</sys:Double>
+    <sys:Double x:Key="Size.LogRow">24</sys:Double>
 
     <!-- Motion -->
     <Duration x:Key="Motion.Fast">0:0:0.12</Duration>
@@ -171,6 +180,9 @@
     <sys:String x:Key="Glyph.Command">&#xE756;</sys:String>
     <sys:String x:Key="Glyph.Open">&#xE8A7;</sys:String>
     <sys:String x:Key="Glyph.Script">&#xE943;</sys:String>
+    <sys:String x:Key="Glyph.Image">&#xE8B9;</sys:String>
+    <sys:String x:Key="Glyph.Log">&#xE81C;</sys:String>
+    <sys:String x:Key="Glyph.Paste">&#xE77F;</sys:String>
     <sys:String x:Key="Glyph.Play">&#xE768;</sys:String>
     <sys:String x:Key="Glyph.Stop">&#xE71A;</sys:String>
     <sys:String x:Key="Glyph.Record">&#xE7C8;</sys:String>

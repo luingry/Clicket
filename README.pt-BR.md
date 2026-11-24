@@ -24,7 +24,8 @@
 
 - **Grava você de forma orgânica.** Teclas, cliques, a roda e o próprio trajeto do mouse, ponto a ponto, com o tempo real entre eles.
 - **Reproduz exatamente.** Cada ponto gravado cai no seu horário original (99% em até 0,2 ms nos testes), então arrastos, desenhos e movimentos em jogos saem iguais toda vez.
-- **Monta macros passo a passo.** Insira passos de teclado, mouse, texto, atraso, loop, comando e abrir, e edite qualquer um à direita. Sem programar.
+- **Monta macros passo a passo.** Insira passos de teclado, mouse, texto, atraso, loop, imagem, comando e abrir, e edite qualquer um à direita. Sem programar.
+- **Espera o que aparece na tela.** Um bloco Imagem procura uma imagem que você capturou, clica nela se quiser, e só então executa os passos de dentro dele.
 - **Ou usa o seu próprio script.** Um passo Script roda PowerShell, e os parâmetros declarados no `param()` viram um formulário de configuração pronto (texto, números, liga/desliga, listas), como a GUI de um script do AutoHotkey.
 - **Roda com qualquer atalho.** Qualquer combinação de teclas ou um botão lateral do mouse: uma vez, repetir N vezes, enquanto segurar ou alternar liga/desliga.
 - **Não atrapalha.** Um app leve na área de notificação que não faz nada até você apertar um atalho. Uma tecla (Ctrl + Alt + End, por padrão) para todas as macros na hora e solta tudo que ainda estiver pressionado.
@@ -51,13 +52,15 @@ O instalador ainda não tem assinatura digital, então o Windows pode mostrar um
 | Dar um atalho | Clique no campo **Atalho** e pressione as teclas (botão lateral do mouse também vale) |
 | Testar | Clique em **Executar**: começa após 3 segundos, para dar tempo de ir para a janela de destino |
 | Repetir uma parte | Selecione os passos e clique no botão de loop acima da lista |
+| Ver o que uma macro fez | Clique no botão de relógio ao lado de **Executar**: uma janelinha mostra os últimos 60 segundos de execução, passo a passo, ao vivo |
+| Esperar uma imagem | Insira **Imagem**, capture com **Capturar da tela** ou **Colar** (o que estiver no Ctrl + C), ajuste o threshold com **Testar agora** e coloque dentro do bloco o que deve rodar quando ela aparecer |
 | Parar tudo | **Ctrl + Alt + End**, de qualquer lugar |
 | Mover ou editar passos | **Alt + ↑ / ↓** move, **Ctrl + D** duplica, **Del** exclui, **Ctrl + Z** desfaz, **Ctrl + C / V** copia passos entre macros |
 | Compartilhar uma macro | **⋯ → Exportar** salva um arquivo `.clicket`; **Importar**, à esquerda, lê um |
 
 ## Privacidade
 
-O Clicket observa teclado e mouse só para reconhecer os atalhos e, enquanto você grava, para capturar o que você faz. Nada sai do seu computador: macros e configurações ficam em `%APPDATA%\Clicket` (ou na pasta do módulo, no SwissTechKnife). O que você digita durante uma gravação fica salvo na macro, então não grave senhas.
+O Clicket observa teclado e mouse só para reconhecer os atalhos e, enquanto você grava, para capturar o que você faz. Nada sai do seu computador: macros e configurações ficam em `%APPDATA%\Clicket` (ou na pasta do módulo, no SwissTechKnife). O que você digita durante uma gravação fica salvo na macro, então não grave senhas. Passos de imagem olham a tela só enquanto rodam, em memória; só a imagem que você capturou fica salva na macro.
 
 ## Para desenvolvedores
 

@@ -127,6 +127,10 @@
                     <Setter TargetName="Title" Property="Foreground" Value="{StaticResource Brush.Cat.Loop}" />
                     <Setter TargetName="Title" Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
+                <DataTrigger Binding="{Binding IsImageMarker}" Value="True">
+                    <Setter TargetName="Title" Property="Foreground" Value="{StaticResource Brush.Cat.Image}" />
+                    <Setter TargetName="Title" Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
     </Window.Resources>
@@ -211,6 +215,7 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button x:Name="PlayButton" Style="{StaticResource Button.Primary}" ui:UiProps.Icon="{StaticResource Glyph.Play}" Content="{ui:Loc Play}" ToolTip="{ui:Loc PlayTip}" Click="OnPlay" MinWidth="104" />
                             <Button x:Name="StopButton" Style="{StaticResource Button.Danger}" ui:UiProps.Icon="{StaticResource Glyph.Stop}" Content="{ui:Loc Stop}" Click="OnStop" MinWidth="104" Visibility="Collapsed" />
+                            <Button x:Name="LogButton" Style="{StaticResource Button.Icon}" ui:UiProps.Icon="{StaticResource Glyph.Log}" ToolTip="{ui:Loc RunLog}" Margin="6,0,0,0" Click="OnOpenLog" />
                             <Button x:Name="MoreButton" Style="{StaticResource Button.Icon}" ui:UiProps.Icon="{StaticResource Glyph.More}" ToolTip="{ui:Loc More}" Margin="6,0,0,0" Click="OnMore">
                                 <Button.ContextMenu>
                                     <ContextMenu x:Name="MoreMenu" Placement="Bottom">
@@ -326,6 +331,7 @@
                             <Button Tag="Command" ui:UiProps.Icon="{StaticResource Glyph.Command}" ui:UiProps.Accent="{StaticResource Brush.Cat.Command}" Content="{ui:Loc CatCommand}" Click="OnInsert" />
                             <Button Tag="Open" ui:UiProps.Icon="{StaticResource Glyph.Open}" ui:UiProps.Accent="{StaticResource Brush.Cat.Open}" Content="{ui:Loc CatOpen}" Click="OnInsert" />
                             <Button Tag="Script" ui:UiProps.Icon="{StaticResource Glyph.Script}" ui:UiProps.Accent="{StaticResource Brush.Cat.Script}" Content="{ui:Loc CatScript}" Click="OnInsert" />
+                            <Button Tag="Image" ui:UiProps.Icon="{StaticResource Glyph.Image}" ui:UiProps.Accent="{StaticResource Brush.Cat.Image}" Content="{ui:Loc CatImage}" Click="OnInsert" />
                         </UniformGrid>
 
                         <ui:StepEditor x:Name="StepEditor" Margin="0,18,0,0" />

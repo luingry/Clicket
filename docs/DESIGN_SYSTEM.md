@@ -9,7 +9,7 @@ The look follows SwissTechKnife (warm, tonal dark surfaces, no strokes) so Click
 ## Where the design does work
 
 - **Timing bars.** Each step's bar is its share of the macro's longest step, on a square-root scale so one 30 s wait does not flatten every 50 ms tap. The bar's color is the step family.
-- **Family hues.** Keyboard green, mouse teal, text amber, delay grey, loop violet, command orange, open blue. The Insert tiles and the timeline glyphs use the same hue, so a new step visibly lands where it came from.
+- **Family hues.** Keyboard green, mouse teal, text amber, delay grey, loop violet, image chartreuse, command orange, open blue, script pink. Block markers (loop and image start and end) take their family hue on the title too, so a block reads as one bracket. The Insert tiles and the timeline glyphs use the same hue, so a new step visibly lands where it came from.
 - **Loop indentation.** Steps inside a loop are indented by depth, and loop markers are violet and bold, so structure needs no brackets.
 - **The pad never takes focus**, so it removes the "switch back to my window" step.
 

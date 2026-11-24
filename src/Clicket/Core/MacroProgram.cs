@@ -18,13 +18,24 @@ public sealed class MacroProgram
 
     public IReadOnlyList<Step> Steps { get; }
 
-    /// <summary>For a loop start, the index of its end, and for a loop end, its start; -1 otherwise.</summary>
+    /// <summary>For a block start (loop or image), the index of its end, and for an end, its start; -1 otherwise.</summary>
     public int[] Partner { get; }
 
     /// <summary>Nesting depth of each step, for indentation.</summary>
     public int[] Depth { get; }
 
-    /// <summary>Pairs loops. Unbalanced markers are reported with the first offending index.</summary>
+    /// <summary>True for the steps that open a block: a loop or an image search.</summary>
+    public static bool IsBlockStart(StepKind kind) => kind == StepKind.LoopStart || kind == StepKind.ImageStart;
+
+    public static bool IsBlockEnd(StepKind kind) => kind == StepKind.LoopEnd || kind == StepKind.ImageEnd;
+
+    /// <summary>The end marker that closes a block of this kind.</summary>
+    public static StepKind EndOf(StepKind start) => start == StepKind.ImageStart ? StepKind.ImageEnd : StepKind.LoopEnd;
+
+    /// <summary>
+    /// Pairs blocks (loops and image searches, nested in any order). An end that closes nothing or closes the other kind
+    /// of block, or a start left open, is reported with the first offending index.
+    /// </summary>
     public static MacroProgram Build(IReadOnlyList<Step> steps, out int errorIndex)
     {
         var partner = new int[steps.Count];
@@ -35,22 +46,22 @@ public sealed class MacroProgram
         {
             partner[i] = -1;
             depth[i] = open.Count;
-            switch (steps[i].Kind)
+            var kind = steps[i].Kind;
+            if (IsBlockStart(kind))
             {
-                case StepKind.LoopStart:
-                    open.Push(i);
-                    break;
-                case StepKind.LoopEnd:
-                    if (open.Count == 0)
-                    {
-                        if (errorIndex < 0) errorIndex = i;
-                        break;
-                    }
-                    var start = open.Pop();
-                    partner[start] = i;
-                    partner[i] = start;
-                    depth[i] = open.Count;
-                    break;
+                open.Push(i);
+            }
+            else if (IsBlockEnd(kind))
+            {
+                if (open.Count == 0 || EndOf(steps[open.Peek()].Kind) != kind)
+                {
+                    if (errorIndex < 0) errorIndex = i;
+                    continue;
+                }
+                var start = open.Pop();
+                partner[start] = i;
+                partner[i] = start;
+                depth[i] = open.Count;
             }
         }
         if (open.Count > 0 && errorIndex < 0)
@@ -94,6 +105,14 @@ public sealed class MacroProgram
                     if (inner == null) return null;
                     total += inner.Value * step.Count + (long)step.LoopPauseMs * (step.Count - 1);
                     i = end;
+                    break;
+                case StepKind.ImageStart:
+                    // The search lasts as long as the picture takes to appear; only the block's own steps count.
+                    var close = program.Partner[i];
+                    var body = Estimate(program, i + 1, close);
+                    if (body == null) return null;
+                    total += body.Value;
+                    i = close;
                     break;
             }
         }

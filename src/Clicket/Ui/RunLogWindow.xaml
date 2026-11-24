@@ -1,0 +1,91 @@
+<Window x:Class="Clicket.Ui.RunLogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Clicket.Ui"
+        Width="{StaticResource Size.LogWidth}" Height="{StaticResource Size.LogHeight}" MinWidth="380" MinHeight="260"
+        Background="{StaticResource Brush.Canvas}" Topmost="True" ShowInTaskbar="True" WindowStartupLocation="Manual"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource Font.Text}">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+    <Window.Resources>
+        <!-- One event: wall-clock time to the millisecond, the step it belongs to, the family glyph and what happened. -->
+        <DataTemplate x:Key="LogRow" DataType="{x:Type ui:LogRow}">
+            <Grid Height="{StaticResource Size.LogRow}" Margin="10,0,12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="88" />
+                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Text.Numeral}" Text="{Binding Time}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Style="{StaticResource Text.Numeral}" Text="{Binding Number}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0" />
+                <Border Grid.Column="2" Width="18" Height="18" CornerRadius="{StaticResource Radius.Sm}" Background="{Binding HueSoft}" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource Text.Icon}" FontSize="10" Text="{Binding Glyph}" Foreground="{Binding Hue}" />
+                </Border>
+                <TextBlock x:Name="Message" Grid.Column="3" Style="{StaticResource Text.Body}" Text="{Binding Text}" VerticalAlignment="Center" Margin="10,0,0,0" />
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsQuiet}" Value="True">
+                    <Setter TargetName="Message" Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                    <Setter TargetName="Message" Property="Foreground" Value="{StaticResource Brush.Warning}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Margin="16,0,12,0" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource Text.Icon}" Text="{StaticResource Glyph.Log}" Foreground="{StaticResource Brush.Accent}" />
+                <TextBlock x:Name="TitleText" Style="{StaticResource Text.BodyStrong}" Margin="10,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <ToggleButton x:Name="PinToggle" Style="{StaticResource Toggle.Icon}" ui:UiProps.Icon="{StaticResource Glyph.Pin}" ToolTip="{ui:Loc RunLogPin}" IsChecked="True"
+                              WindowChrome.IsHitTestVisibleInChrome="True" VerticalAlignment="Center" Click="OnPin" />
+                <Button Style="{StaticResource Button.Icon}" ui:UiProps.Icon="{StaticResource Glyph.Copy}" ToolTip="{ui:Loc RunLogCopy}"
+                        WindowChrome.IsHitTestVisibleInChrome="True" VerticalAlignment="Center" Margin="2,0,0,0" Click="OnCopy" />
+                <Button Style="{StaticResource Button.Icon}" ui:UiProps.Icon="{StaticResource Glyph.Delete}" ToolTip="{ui:Loc RunLogClear}"
+                        WindowChrome.IsHitTestVisibleInChrome="True" VerticalAlignment="Center" Margin="2,0,10,0" Click="OnClear" />
+                <Button Style="{StaticResource Button.Caption.Close}" Content="{StaticResource Glyph.Close}" ToolTip="{ui:Loc Close}" WindowChrome.IsHitTestVisibleInChrome="True" Click="OnClose" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Events -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Background="{StaticResource Brush.Surface1}" Margin="12,0,12,12" Padding="4,10,4,6">
+            <DockPanel>
+                <TextBlock x:Name="CountText" DockPanel.Dock="Top" Style="{StaticResource Text.Caption}" Margin="10,0,10,8" />
+                <Grid>
+                    <ItemsControl x:Name="Events" ItemTemplate="{StaticResource LogRow}"
+                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
+                        <ItemsControl.Template>
+                            <ControlTemplate TargetType="ItemsControl">
+                                <ScrollViewer x:Name="Scroller" CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <TextBlock x:Name="EmptyText" Style="{StaticResource Text.Paragraph}" Text="{ui:Loc RunLogEmpty}" Margin="10,4,10,0" VerticalAlignment="Top" Visibility="Collapsed" />
+                </Grid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

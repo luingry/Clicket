@@ -27,6 +27,11 @@ public static class StepFormatter
                 return step.Count <= 0 ? Strings.Get("DescLoopForever") : Strings.Format("DescLoop", step.Count);
             case StepKind.LoopEnd:
                 return Strings.Get("DescLoopEnd");
+            case StepKind.ImageStart:
+                if (string.IsNullOrEmpty(step.ImageData)) return Strings.Get("DescImageEmpty");
+                return Strings.Format(step.ClickImage ? "DescImageClick" : "DescImage", step.Threshold);
+            case StepKind.ImageEnd:
+                return Strings.Get("DescImageEnd");
             case StepKind.Command:
                 return Strings.Format("DescCommand", Shorten(step.Command));
             case StepKind.Script:
@@ -58,6 +63,8 @@ public static class StepFormatter
                 return step.MsMax > step.Ms ? Strings.Duration(step.Ms) + " – " + Strings.Duration(step.MsMax) : Strings.Duration(step.Ms);
             case StepKind.LoopStart:
                 return Strings.Format("LoopPauseTiming", Strings.Duration(step.LoopPauseMs));
+            case StepKind.ImageStart:
+                return Strings.Format("ImageEvery", Strings.Duration(step.IntervalMs));
             case StepKind.Path:
             case StepKind.Text:
                 var ms = Millis(step);
@@ -81,6 +88,7 @@ public static class StepFormatter
             case StepKind.LoopStart: case StepKind.LoopEnd: return "Loop";
             case StepKind.Command: return "Command";
             case StepKind.Script: return "Script";
+            case StepKind.ImageStart: case StepKind.ImageEnd: return "Image";
             default: return "Open";
         }
     }

@@ -3,7 +3,9 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Clicket.Core;
+using Clicket.Input;
 
 namespace Clicket.Ui;
 
@@ -70,6 +72,8 @@ public partial class StepEditor : UserControl
             Show(CommandPanel, step.Kind == StepKind.Command);
             Show(OpenPanel, step.Kind == StepKind.Open);
             Show(ScriptPanel, step.Kind == StepKind.Script);
+            Show(ImagePanel, step.Kind == StepKind.ImageStart);
+            Show(ImageEndPanel, step.Kind == StepKind.ImageEnd);
 
             switch (step.Kind)
             {
@@ -124,6 +128,19 @@ public partial class StepEditor : UserControl
                 case StepKind.Open:
                     TargetBox.Text = step.Target ?? "";
                     ArgumentsBox.Text = step.Arguments ?? "";
+                    break;
+                case StepKind.ImageStart:
+                    ThresholdBox.Text = step.Threshold.ToString(CultureInfo.InvariantCulture);
+                    ClickImageBox.IsChecked = step.ClickImage;
+                    IntervalBox.Text = step.IntervalMs.ToString(CultureInfo.InvariantCulture);
+                    TimeoutBox.Text = step.TimeoutMs.ToString(CultureInfo.InvariantCulture);
+                    ShowPicture(step);
+                    if (!ReferenceEquals(_testedStep, step))
+                    {
+                        _testedStep = null;
+                        Show(ImageTestResult, false);
+                        Show(ImageProblem, false);
+                    }
                     break;
             }
             NoteBox.Text = step.Note ?? "";
@@ -392,6 +409,129 @@ public partial class StepEditor : UserControl
             ScriptFields.Children.Add(box);
         }
     }
+
+    // ---------- Image ----------
+
+    private Step? _testedStep;
+    private string? _previewData;
+    private BitmapSource? _previewSource;
+
+    /// <summary>The preview decodes only when the picture changed, not on every reload of the panel.</summary>
+    private void ShowPicture(Step step)
+    {
+        if (!ReferenceEquals(_previewData, step.ImageData))
+        {
+            _previewData = step.ImageData;
+            var picture = ImageCodec.Decode(step.ImageData);
+            _previewSource = picture == null ? null : ImageCodec.ToSource(picture);
+        }
+        ImagePreview.Source = _previewSource;
+        Show(ImagePreview, _previewSource != null);
+        Show(ImageNoneText, _previewSource == null);
+        Show(ImageSizeText, _previewSource != null);
+        Show(ImageTestButton, _previewSource != null);
+        if (_previewSource != null) ImageSizeText.Text = Strings.Format("ImageSize", _previewSource.PixelWidth, _previewSource.PixelHeight);
+    }
+
+    private void SetPicture(PixelImage picture)
+    {
+        var data = ImageCodec.Encode(picture);
+        Apply(s => s.ImageData = data);
+        Show(ImageProblem, false);
+        Show(ImageTestResult, false);
+        Load(_item);
+    }
+
+    private void OnImageCapture(object sender, RoutedEventArgs e)
+    {
+        RegionPicker.Pick(Window.GetWindow(this), picture =>
+        {
+            if (_item?.Step.Kind == StepKind.ImageStart) SetPicture(picture);
+        });
+    }
+
+    private void OnImageOpen(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { CheckFileExists = true, Filter = "PNG, JPEG, BMP, GIF, TIFF|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff" };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        UsePicture(ImageCodec.Load(dialog.FileName, out var problem), problem);
+    }
+
+    private void OnImagePaste(object sender, RoutedEventArgs e) => UsePicture(ImageCodec.FromClipboard(out var problem), problem);
+
+    private void UsePicture(PixelImage? picture, string? problem)
+    {
+        if (picture == null)
+        {
+            ImageProblem.Text = Strings.Get(problem == "TooLarge" ? "ImageTooLarge" : problem == "NoClipboard" ? "ImageNoClipboard" : "ImageUnreadable");
+            Show(ImageProblem, true);
+            return;
+        }
+        SetPicture(picture);
+    }
+
+    private void OnThresholdChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TryInt(ThresholdBox, 1, 100, out var percent)) Apply(s => s.Threshold = percent, "threshold");
+    }
+
+    private void OnClickImageChanged(object sender, RoutedEventArgs e) => Apply(s => s.ClickImage = ClickImageBox.IsChecked == true);
+
+    /// <summary>Below the minimum is accepted while typing and stored as the minimum.</summary>
+    private void OnIntervalChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TryInt(IntervalBox, 0, 86_400_000, out var ms)) Apply(s => s.IntervalMs = ms, "interval");
+    }
+
+    private void OnTimeoutChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TryInt(TimeoutBox, 0, 86_400_000, out var ms)) Apply(s => s.TimeoutMs = ms, "timeout");
+    }
+
+    private void OnImageFieldBlur(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
+    {
+        if (_item?.Step.Kind != StepKind.ImageStart) return;
+        ThresholdBox.Text = _item.Step.Threshold.ToString(CultureInfo.InvariantCulture);
+        IntervalBox.Text = _item.Step.IntervalMs.ToString(CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// One search of the screen as the macro would make it, with Clicket's window out of the way, so the threshold can be
+    /// tuned against the real screen. Nothing is clicked.
+    /// </summary>
+    private void OnImageTest(object sender, RoutedEventArgs e)
+    {
+        if (_item?.Step.Kind != StepKind.ImageStart) return;
+        var step = _item.Step;
+        var picture = ImageCodec.Decode(step.ImageData);
+        if (picture == null) return;
+        _testedStep = step;
+        ImageTestButton.IsEnabled = false;
+        ImageTestResult.Text = Strings.Get("ImageTesting");
+        Show(ImageTestResult, true);
+        var threshold = step.Threshold / 100.0;
+        ScreenGrab.WithoutOwner(Window.GetWindow(this), () =>
+        {
+            // Runs on a worker thread while Clicket's window is hidden.
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
+            using var capture = new ScreenCapture();
+            var screen = capture.Grab();
+            var match = new ImageMatcher(picture).Find(screen, threshold);
+            var ms = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000 / System.Diagnostics.Stopwatch.Frequency;
+            var x = capture.Left + match.X + picture.Width / 2;
+            var y = capture.Top + match.Y + picture.Height / 2;
+            return match.Found
+                ? Strings.Format("ImageTestFound", Percent(match.Score), x, y, Strings.Duration(ms))
+                : Strings.Format("ImageTestMissed", Percent(match.Score), Strings.Duration(ms));
+        }, text =>
+        {
+            ImageTestButton.IsEnabled = true;
+            if (!ReferenceEquals(_testedStep, _item?.Step)) return;
+            ImageTestResult.Text = text ?? Strings.Get("ImageTestFailed");
+        });
+    }
+
+    internal static string Percent(double score) => Math.Round(Math.Max(0, score) * 100).ToString("0", Strings.Culture);
 
     private void OnNoteChanged(object sender, TextChangedEventArgs e) => Apply(s => s.Note = NoteBox.Text.Trim().Length == 0 ? null : NoteBox.Text, "note");
 

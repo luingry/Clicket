@@ -39,6 +39,13 @@ internal static class Program
             FormatterDescribesSteps();
             WaiterKeepsTheRecordedClock();
             ScriptParametersBecomeFields();
+            ProgramPairsImageBlocks();
+            ImageStepDefaults();
+            MatcherFindsThePicture();
+            MatcherRejectsWhatIsNotThere();
+            MatcherHandlesFlatAndThinPictures();
+            MatcherIsFastOnAFullScreen();
+            RunLogKeepsTheLastMinute();
         }
         finally
         {
@@ -409,6 +416,183 @@ internal static class Program
         var call = ScriptParams.BuildInvocation(@"C:\t\s.ps1", p, values);
         Check(call == @"& 'C:\t\s.ps1' -Order 'Name, then date' -Start 7 -DryRun:$true -Plain 'it''s'; exit $LASTEXITCODE",
             "only set values are passed, quoted safely; bad numbers are skipped (got " + call + ")");
+    }
+
+    private static void ProgramPairsImageBlocks()
+    {
+        var steps = new List<Step>
+        {
+            new Step { Kind = StepKind.LoopStart, Count = 0 },
+            new Step { Kind = StepKind.ImageStart },
+            Step.MouseStep(MouseAction.Click),
+            new Step { Kind = StepKind.ImageEnd },
+            new Step { Kind = StepKind.LoopEnd },
+        };
+        var program = MacroProgram.Build(steps, out var error);
+        Check(error == -1, "an image block nests inside a loop");
+        Check(program.Partner[1] == 3 && program.Partner[3] == 1 && program.Partner[0] == 4, "image blocks pair like loops");
+        Check(program.Depth[2] == 2 && program.Depth[3] == 1, "image blocks indent their steps");
+        MacroProgram.Build(new List<Step> { new Step { Kind = StepKind.LoopStart }, new Step { Kind = StepKind.ImageEnd } }, out error);
+        Check(error == 1, "an image end cannot close a loop");
+        MacroProgram.Build(new List<Step> { new Step { Kind = StepKind.ImageStart } }, out error);
+        Check(error == 0, "an unclosed image block is reported");
+        var timed = new List<Step> { new Step { Kind = StepKind.ImageStart }, Step.DelayStep(40), new Step { Kind = StepKind.ImageEnd } };
+        Check(MacroProgram.EstimateMillis(timed) == 40, "an image block's estimate is its own steps");
+    }
+
+    private static void ImageStepDefaults()
+    {
+        var step = new Step { Kind = StepKind.ImageStart };
+        Check(step.Threshold == 90 && step.IntervalMs == 250 && step.TimeoutMs == 0 && !step.ClickImage, "image defaults: 90 %, every 250 ms, no time limit, no click");
+        step.IntervalMs = 0;
+        step.Threshold = 250;
+        Check(step.IntervalMs == Step.MinIntervalMs && step.Threshold == 100, "interval and threshold are clamped");
+        step.ImageData = "abc";
+        step.ClickImage = true;
+        var copy = step.Clone();
+        Check(copy.ImageData == "abc" && copy.ClickImage && copy.Threshold == 100, "clone keeps the picture and its settings");
+        Check(StepFormatter.Title(new Step { Kind = StepKind.ImageStart, ImageData = "x" }) == "When the image appears (90 %)", "image title");
+        Check(StepFormatter.Title(new Step { Kind = StepKind.ImageStart, ImageData = "x", ClickImage = true, Threshold = 85 }) == "Find and click the image (85 %)", "image click title");
+        Check(StepFormatter.Timing(new Step { Kind = StepKind.ImageStart, IntervalMs = 500 }) == "every 500 ms", "image timing is the interval");
+    }
+
+    /// <summary>A screen-like picture: a soft background, many overlapping coloured panels and per-pixel noise.</summary>
+    private static PixelImage Scene(int width, int height, int seed)
+    {
+        var random = new Random(seed);
+        var pixels = new byte[width * height * 4];
+        var phase = random.NextDouble() * 10;
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var o = (y * width + x) * 4;
+                for (var c = 0; c < 3; c++) pixels[o + c] = (byte)(100 + 40 * Math.Sin(x * (0.013 + 0.004 * c) + y * 0.009 + phase + c));
+                pixels[o + 3] = 255;
+            }
+        }
+        var panels = width * height / 2500;
+        for (var p = 0; p < panels; p++)
+        {
+            int pw = random.Next(6, 90), ph = random.Next(4, 60), px = random.Next(0, width - pw), py = random.Next(0, height - ph);
+            int b = random.Next(256), g = random.Next(256), r = random.Next(256);
+            for (var y = py; y < py + ph; y++)
+            {
+                for (var x = px; x < px + pw; x++)
+                {
+                    var o = (y * width + x) * 4;
+                    pixels[o] = (byte)b;
+                    pixels[o + 1] = (byte)g;
+                    pixels[o + 2] = (byte)r;
+                }
+            }
+        }
+        for (var i = 0; i < pixels.Length; i += 4)
+            for (var c = 0; c < 3; c++) pixels[i + c] = (byte)Math.Max(0, Math.Min(255, pixels[i + c] + random.Next(-8, 9)));
+        return new PixelImage(width, height, pixels, width * 4);
+    }
+
+    private static void Paste(PixelImage into, PixelImage picture, int x, int y, Func<byte, int, byte>? change = null)
+    {
+        for (var j = 0; j < picture.Height; j++)
+        {
+            for (var i = 0; i < picture.Width * 4; i++)
+            {
+                var value = picture.Pixels[j * picture.Stride + i];
+                into.Pixels[(y + j) * into.Stride + x * 4 + i] = change == null ? value : change(value, i % 4);
+            }
+        }
+    }
+
+    private static void MatcherFindsThePicture()
+    {
+        var screen = Scene(800, 500, 1);
+        var picture = screen.Crop(523, 311, 40, 30)!;
+        var match = new ImageMatcher(picture).Find(screen, 0.9);
+        Check(match.Found && match.X == 523 && match.Y == 311 && match.Score > 0.99, "finds an exact crop at its place (got " + match.X + "," + match.Y + " " + match.Score.ToString("0.000") + ")");
+
+        var lighter = Scene(800, 500, 2);
+        Paste(lighter, picture, 101, 77, (v, c) => (byte)Math.Min(255, v + 14));
+        match = new ImageMatcher(picture).Find(lighter, 0.9);
+        Check(match.Found && match.X == 101 && match.Y == 77, "still finds a slightly lighter copy (score " + match.Score.ToString("0.000") + ")");
+
+        var edge = Scene(640, 400, 3);
+        var corner = edge.Crop(640 - 33, 400 - 21, 33, 21)!;
+        match = new ImageMatcher(corner).Find(edge, 0.95);
+        Check(match.Found && match.X == 607 && match.Y == 379, "finds a picture in the bottom-right corner, odd sizes (got " + match.X + "," + match.Y + ")");
+    }
+
+    private static void MatcherRejectsWhatIsNotThere()
+    {
+        var picture = Scene(800, 500, 1).Crop(523, 311, 40, 30)!;
+        var other = Scene(800, 500, 9);
+        var match = new ImageMatcher(picture).Find(other, 0.9);
+        Check(!match.Found && match.Score < 0.9, "a screen without the picture is no match (best " + match.Score.ToString("0.000") + ")");
+
+        // Same pattern, other colours: much bluer and less red, as a button in another state would be.
+        var swapped = Scene(800, 500, 4);
+        Paste(swapped, picture, 200, 150, (v, c) => c == 0 ? (byte)Math.Min(255, v + 90) : c == 2 ? (byte)Math.Max(0, v - 90) : v);
+        match = new ImageMatcher(picture).Find(swapped, 0.9);
+        Check(!match.Found, "a copy in other colours does not match (score " + match.Score.ToString("0.000") + ")");
+
+        var tiny = new PixelImage(2, 2, new byte[16], 8);
+        Check(!new ImageMatcher(Scene(60, 40, 5)).Find(tiny, 0.5).Found, "a picture larger than the screen is no match");
+    }
+
+    private static void MatcherHandlesFlatAndThinPictures()
+    {
+        var screen = Scene(600, 400, 6);
+        var flat = new byte[20 * 20 * 4];
+        for (var i = 0; i < flat.Length; i += 4)
+        {
+            flat[i] = 230;
+            flat[i + 1] = 40;
+            flat[i + 2] = 10;
+        }
+        var swatch = new PixelImage(20, 20, flat, 80);
+        Paste(screen, swatch, 333, 222);
+        var match = new ImageMatcher(swatch).Find(screen, 0.95);
+        Check(match.Found && Math.Abs(match.X - 333) <= 0 && match.Y == 222, "finds a one-colour picture (got " + match.X + "," + match.Y + ")");
+
+        var strip = Scene(900, 500, 7);
+        var thin = strip.Crop(410, 260, 120, 9)!;
+        match = new ImageMatcher(thin).Find(strip, 0.9);
+        Check(match.Found && match.X == 410 && match.Y == 260, "finds a wide, thin picture (got " + match.X + "," + match.Y + ")");
+    }
+
+    private static void MatcherIsFastOnAFullScreen()
+    {
+        var screen = Scene(2560, 1440, 8);
+        var picture = screen.Crop(1800, 1000, 48, 48)!;
+        var matcher = new ImageMatcher(picture);
+        matcher.Find(screen, 0.9); // first run allocates the buffers
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var match = matcher.Find(screen, 0.9);
+        watch.Stop();
+        Console.WriteLine("Image search on 2560x1440 with a 48x48 picture: " + watch.ElapsedMilliseconds + " ms");
+        Check(match.Found && match.X == 1800 && match.Y == 1000, "finds the picture on a full 1440p screen");
+        Check(watch.ElapsedMilliseconds < 400, "a full-screen search stays well under half a second (" + watch.ElapsedMilliseconds + " ms)");
+    }
+
+    private static void RunLogKeepsTheLastMinute()
+    {
+        var log = new RunLog();
+        var second = System.Diagnostics.Stopwatch.Frequency;
+        log.Add(0, RunEventKind.Started, value: 1);
+        log.Add(30 * second, RunEventKind.Step, 0);
+        log.Add(59 * second, RunEventKind.Step, 1);
+        Check(log.Next - log.First == 3, "events within a minute are all kept");
+        log.Add(75 * second, RunEventKind.Finished, value: 1);
+        Check(log.First == 1 && log.Next == 4, "events older than a minute before the newest are dropped");
+        Check(log.TryGet(3, out var last) && last.Kind == RunEventKind.Finished && !log.TryGet(0, out _), "events are read by sequence number");
+
+        var busy = new RunLog();
+        for (var i = 0; i < RunLog.Capacity + 10; i++) busy.Add(i, RunEventKind.Step, i);
+        Check(busy.Next - busy.First == RunLog.Capacity && busy.Dropped == 10, "a flood keeps the newest events up to the capacity");
+        busy.Clear();
+        Check(busy.Next == busy.First && busy.Dropped == 0, "clear empties the log");
+        busy.Add(5, RunEventKind.Step, 0);
+        Check(busy.TryGet(busy.First, out var after) && after.StepIndex == 0, "a cleared log keeps logging");
     }
 
     private static void Check(bool condition, string name)

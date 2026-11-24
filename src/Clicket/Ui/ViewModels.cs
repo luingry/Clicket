@@ -96,6 +96,7 @@ public sealed class StepItem : Observable
                 var info = PathCodec.Measure(Step.PathData);
                 return Strings.Format("DescPathDetail", info.Count);
             }
+            if (Step.Kind == StepKind.ImageStart && Step.TimeoutMs > 0) return Strings.Format("DescImageTimeout", Strings.Duration(Step.TimeoutMs));
             if (Step.Kind == StepKind.Script)
             {
                 var count = ScriptParams.Parse(Step.Script).Count;
@@ -135,6 +136,8 @@ public sealed class StepItem : Observable
     public Brush HueSoft => Artwork.Token<Brush>("Brush.Cat." + StepFormatter.CategoryKey(Step.Kind) + ".Soft");
 
     public bool IsLoopMarker => Step.Kind == StepKind.LoopStart || Step.Kind == StepKind.LoopEnd;
+
+    public bool IsImageMarker => Step.Kind == StepKind.ImageStart || Step.Kind == StepKind.ImageEnd;
 
     public void Refresh() => RaiseAll();
 }

@@ -109,6 +109,49 @@
                 <TextBlock Style="{StaticResource Text.Paragraph}" Text="{ui:Loc LoopEndInfo}" Margin="{StaticResource Space.Gap.TopLg}" />
             </StackPanel>
 
+            <!-- Image: the picture, how alike it must be, whether to click it, and how the search repeats -->
+            <StackPanel x:Name="ImagePanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc ImagePicture}" />
+                <Border Background="{StaticResource Brush.Surface2}" CornerRadius="{StaticResource Radius.Md}" Padding="10" MinHeight="{StaticResource Size.Tile}">
+                    <Grid>
+                        <Image x:Name="ImagePreview" MaxHeight="{StaticResource Size.ImagePreview}" Stretch="Uniform" StretchDirection="DownOnly"
+                               HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                        <TextBlock x:Name="ImageNoneText" Style="{StaticResource Text.Paragraph}" FontSize="{StaticResource Type.Caption}" Text="{ui:Loc ImageNone}"
+                                   VerticalAlignment="Center" TextAlignment="Center" />
+                    </Grid>
+                </Border>
+                <TextBlock x:Name="ImageSizeText" Style="{StaticResource Text.Caption}" Margin="{StaticResource Space.Gap.TopSm}" />
+                <Button Style="{StaticResource Button.Secondary}" HorizontalAlignment="Stretch" Margin="{StaticResource Space.Gap.TopSm}"
+                        ui:UiProps.Icon="{StaticResource Glyph.Target}" Content="{ui:Loc ImageCapture}" Click="OnImageCapture" />
+                <Grid Margin="{StaticResource Space.Gap.TopSm}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Style="{StaticResource Button.Secondary}" HorizontalAlignment="Stretch" ui:UiProps.Icon="{StaticResource Glyph.Paste}" Content="{ui:Loc ImagePaste}"
+                            ToolTip="{ui:Loc ImagePasteTip}" Click="OnImagePaste" />
+                    <Button Grid.Column="2" Style="{StaticResource Button.Secondary}" HorizontalAlignment="Stretch" ui:UiProps.Icon="{StaticResource Glyph.Folder}" Content="{ui:Loc ImageOpen}" Click="OnImageOpen" />
+                </Grid>
+                <TextBlock x:Name="ImageProblem" Style="{StaticResource Text.Caption}" Foreground="{StaticResource Brush.Warning}" Margin="{StaticResource Space.Gap.TopSm}" TextWrapping="Wrap" Visibility="Collapsed" />
+
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc ImageThreshold}" />
+                <TextBox x:Name="ThresholdBox" TextChanged="OnThresholdChanged" LostKeyboardFocus="OnImageFieldBlur" />
+                <CheckBox x:Name="ClickImageBox" Content="{ui:Loc ImageClick}" Margin="{StaticResource Space.Gap.Top}" Click="OnClickImageChanged" />
+
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc ImageInterval}" />
+                <TextBox x:Name="IntervalBox" TextChanged="OnIntervalChanged" LostKeyboardFocus="OnImageFieldBlur" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc ImageTimeout}" />
+                <TextBox x:Name="TimeoutBox" TextChanged="OnTimeoutChanged" />
+
+                <Button x:Name="ImageTestButton" Style="{StaticResource Button.Secondary}" HorizontalAlignment="Left" ui:UiProps.Icon="{StaticResource Glyph.Search}" Content="{ui:Loc ImageTest}"
+                        Margin="{StaticResource Space.Gap.Top}" Click="OnImageTest" />
+                <TextBlock x:Name="ImageTestResult" Style="{StaticResource Text.Secondary}" Margin="{StaticResource Space.Gap.TopSm}" TextWrapping="Wrap" TextTrimming="None" Visibility="Collapsed" />
+            </StackPanel>
+            <StackPanel x:Name="ImageEndPanel">
+                <TextBlock Style="{StaticResource Text.Paragraph}" Text="{ui:Loc ImageEndInfo}" Margin="{StaticResource Space.Gap.TopLg}" />
+            </StackPanel>
+
             <!-- Command -->
             <StackPanel x:Name="CommandPanel">
                 <TextBlock Style="{StaticResource Label}" Text="{ui:Loc CommandLine}" />

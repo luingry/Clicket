@@ -61,3 +61,17 @@
 - **Open:** the 10–13 ms per `SendInput` comes from some other process's low-level hook (Windows waits for every hook before returning). It caps clicks near 75/s on that machine; identify it by measuring with suspects closed.
 - **Measured (authorized probe, real desktop):** injected mouse move 0.08 ms, key down+up 0.9 ms, **left button down 10.3 ms** (up ~0.1 ms). A low-level mouse hook in another process does ~10 ms of work per button press; Clicket cannot bypass it (neither can AutoHotkey).
 - **Root cause found (2026-11-24, authorized elimination on the real desktop):** the AqTracker module (SwissTechKnife, `AqTracker.Hosted.exe`). With everything else running, removing only AqTracker took an injected left click from 11 ms to 0.38 ms; with a fresh AqTracker the p50 starts at 0.5 ms and the p90 climbs back to ~10 ms within seconds, matching the "65 then down to 35 CPS" report. AqTracker has no low-level hook in its source, so the mechanism inside it is still unknown (to investigate in its own repository). Ruled out by measurement: Roblox, ShareX, PowerToys, SmoothMice, WinputLan (+ cursor guard), PadTide, the SwissTechKnife host, Clicket itself, thread message queue, DPI context, process priority. AutoHotkey measured on the same desktop hit the same 75 CPS ceiling, so it is not a Clicket limitation.
+
+## Image search matched the wrong place for one-colour pictures (found in tests, before release of 1.1.2)
+
+- **Symptom:** a solid-colour picture was "found" elsewhere on the screen; a recoloured copy of a pattern still scored above 90 %.
+- **Cause:** the coarse pyramid scan scored brightness only, so every even area of the same grey competed with the real one and the true place could fall out of the top candidates before colour was ever checked.
+- **Fix:** a picture whose channels are all even (std < 2) is searched on a "distance to its colour" image instead of brightness, so colour decides from the first level. Patterned pictures keep correlation on brightness, capped by the average-colour difference at full size.
+- **Avoid:** synthetic test screens must not be periodic, or a wrong place matches as well as the right one; `MatcherFindsThePicture` uses random panels plus noise.
+
+## Mouse wheel scrolled far too much in every Clicket list and panel (user report on a pre-release build of 1.1.2)
+
+- **Evidence:** same failure SwissTechKnife fixed in 0.4.9 (its `ERRORS.md`, 2026-10-26); SmoothMice runs on the user's machine. A probe raising 17 wheel events of delta -7 (about one notch) on a Clicket-styled `ScrollViewer`, with layout between them as on screen, moved 816 px instead of 48.
+- **Cause:** WPF's `ScrollViewer` scrolls a fixed step per wheel message and ignores `MouseWheelEventArgs.Delta`; smooth-scrolling tools, high-resolution wheels and precision touchpads send many fractional deltas.
+- **Fix (1.1.2):** `Ui/WheelScrolling` (ported from STK) registers a class handler on `ScrollViewer` in `App.OnStartup` that scales the scroll by `Delta / 120`: exact pixels in pixel mode, a carried remainder in item mode; whole notches keep WPF's path. Same probe after the fix: 47.6 px.
+- **Avoid:** every WPF app of this family needs this handler from the start; a probe without a layout pass between messages hides the bug (it showed 48 px before the fix).

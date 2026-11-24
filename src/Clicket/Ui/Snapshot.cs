@@ -29,6 +29,8 @@ internal static class Snapshot
             window.ShowTrashForSnapshot(4, armed: true);
         }));
         Capture(directory, "main-script" + suffix + ".png", MainOf(window => window.SelectForSnapshot(3, 0), 1000));
+        Capture(directory, "main-image" + suffix + ".png", MainOf(window => window.SelectForSnapshot(6, 1), 1000));
+        Capture(directory, "run-log" + suffix + ".png", SampleLog(app.Library[6]));
         Capture(directory, "main-settings" + suffix + ".png", MainOf(window =>
         {
             window.SelectForSnapshot(0, 2);
@@ -135,7 +137,53 @@ internal static class Snapshot
         rename.Steps.Add(script);
         rename.Steps.Add(new Step { Kind = StepKind.Text, Text = "Done ✔" });
 
-        return new List<Macro> { farm, signature, drag, rename, dns, dash };
+        var accept = new Macro { Name = "Accept the match", Hotkey = new Hotkey(Vk.F1 + 7, Modifiers.None), Mode = PlayMode.Toggle };
+        accept.Steps.AddRange(new[]
+        {
+            new Step { Kind = StepKind.LoopStart, Count = 0, LoopPauseMs = 500 },
+            new Step { Kind = StepKind.ImageStart, ImageData = SampleButton(), ClickImage = true, Threshold = 92, IntervalMs = 300 },
+            Step.DelayStep(400),
+            Step.KeyStep(Vk.Return, 0, false, KeyAction.Press),
+            new Step { Kind = StepKind.ImageEnd },
+            new Step { Kind = StepKind.LoopEnd },
+        });
+
+        return new List<Macro> { farm, signature, drag, rename, dns, dash, accept };
+    }
+
+    /// <summary>A button-like picture for the image step, drawn here so the snapshot needs no file.</summary>
+    private static string SampleButton()
+    {
+        var bitmap = Artwork.Render(112, 36, dc =>
+        {
+            dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(0x3E, 0x9B, 0x5A)), null, new Rect(0, 0, 112, 36), 8, 8);
+            var text = new FormattedText("ACCEPT", System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                new Typeface("Segoe UI Semibold"), 14, Brushes.White, 1.0);
+            dc.DrawText(text, new Point((112 - text.Width) / 2, (36 - text.Height) / 2));
+        });
+        return Input.ImageCodec.Encode(Input.ImageCodec.FromSource(bitmap));
+    }
+
+    /// <summary>A minute of that macro's execution, as the log window shows it while it runs.</summary>
+    private static Window SampleLog(Macro macro)
+    {
+        var log = RunLogs.For(macro.Id);
+        log.Clear();
+        var second = System.Diagnostics.Stopwatch.Frequency;
+        var t = System.Diagnostics.Stopwatch.GetTimestamp() - 20 * second;
+        var image = macro.Steps[1];
+        log.Add(t, RunEventKind.Started, value: 0);
+        for (var i = 0; i < 4; i++) log.Add(t += second * 3 / 10, RunEventKind.ImageMissed, 1, image, null, 0.41 + i * 0.03, 0, 0, 38 + i);
+        log.Add(t += second * 3 / 10, RunEventKind.ImageFound, 1, image, "Click", 0.97, 1712, 948, 41);
+        log.Add(t += second / 1000, RunEventKind.Step, 2, macro.Steps[2]);
+        log.Add(t += second * 4 / 10, RunEventKind.Step, 3, macro.Steps[3]);
+        for (var i = 0; i < 3; i++) log.Add(t += second / 2, RunEventKind.ImageMissed, 1, image, null, 0.38, 0, 0, 36);
+        log.Add(t += second / 3, RunEventKind.Warning, 1, image, "Access is denied.");
+        log.Add(t += second / 3, RunEventKind.ImageFound, 1, image, "Click", 0.95, 1712, 950, 40);
+        log.Add(t += second / 1000, RunEventKind.Step, 2, macro.Steps[2]);
+        log.Add(t += second * 4 / 10, RunEventKind.Step, 3, macro.Steps[3]);
+        log.Add(t += second / 2, RunEventKind.Finished, value: 2);
+        return new RunLogWindow(macro);
     }
 
     private static Step Click(MouseButton button) => Step.MouseStep(MouseAction.Click, button);

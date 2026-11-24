@@ -24,7 +24,8 @@
 
 - **Records you, organically.** Keys, clicks, the wheel and the mouse path itself, sample by sample, with the real timing between them.
 - **Replays exactly.** Every recorded point lands on its original clock (99% within 0.2 ms in tests), so drags, drawings and game moves come out the same every time.
-- **Builds macros step by step.** Insert keyboard, mouse, text, delay, loop, command and open steps, then edit any of them on the right. Nothing to code.
+- **Builds macros step by step.** Insert keyboard, mouse, text, delay, loop, image, command and open steps, then edit any of them on the right. Nothing to code.
+- **Waits for what is on screen.** An Image block looks for a picture you captured, clicks it if you want, and only then runs the steps inside it.
 - **Or brings your own script.** A Script step runs PowerShell, and its parameters show up as a ready-made settings form.
 - **Runs from any hotkey.** Any key combination or a mouse side button: play once, repeat N times, repeat while held, or toggle on and off.
 - **Stays out of the way.** A tiny tray app that does nothing until you press a hotkey. One key (Ctrl + Alt + End by default) stops every macro instantly and releases anything still held down.
@@ -55,6 +56,7 @@ The installer has no digital signature yet, so Windows may show a SmartScreen wa
 | Give it a hotkey | Click the **Hotkey** field and press the keys (a mouse side button works too) |
 | Test it | Press **Play**: it starts after 3 seconds, so you can switch to the target window |
 | Repeat part of it | Select the steps and press the loop button above the list |
+| See what a macro did | Press the clock button next to **Play**: a small window shows the last 60 seconds of its execution, step by step, live |
 | Stop everything | **Ctrl + Alt + End**, from anywhere |
 | Move or edit steps | **Alt + ↑ / ↓** moves, **Ctrl + D** duplicates, **Del** deletes, **Ctrl + Z** undoes, **Ctrl + C / V** copies steps between macros |
 | Share a macro | **⋯ → Export** saves a `.clicket` file; **Import** on the left reads one |
@@ -69,9 +71,18 @@ Step types:
 | Text | Types any text, in any language, emoji included |
 | Delay | Waits a set time, or a random time within a range |
 | Loop | Repeats the steps inside it a number of times, or until stopped, with a pause between rounds (1 ms at minimum) |
+| Image | Looks for a picture on every monitor, again after each check interval, until it shows up (or gives up after a time limit). When the match is above the threshold it clicks the picture (optional) and runs the steps inside the block. Capture the picture with **From screen** or **Paste** (whatever Ctrl + C copied), tune the threshold with **Test now** |
 | Command | Runs a command line in Command Prompt or PowerShell, optionally hidden and waiting for it |
 | Open | Opens a file, folder, program or web address |
 | Script | Runs your own PowerShell script; whatever its `param()` block declares becomes fields in the editor (text, numbers, on/off, lists), so you adjust it without touching the code |
+
+<p align="center">
+  <img src="docs/images/image-step.png" width="820" alt="An image step: a captured button picture, the match threshold, the Click on the image checkbox, the check interval and the time limit, inside a loop that repeats until stopped">
+</p>
+
+<p align="center">
+  <img src="docs/images/run-log.png" width="560" alt="The run log window: each event with its time to the millisecond, the step number and what happened, including image searches with their match score">
+</p>
 
 ### Scripts with a setup panel
 
@@ -95,7 +106,7 @@ param(
 
 ## Privacy
 
-Clicket watches the keyboard and mouse only to catch its hotkeys and, while you record, to capture what you do. Nothing leaves your computer: macros and settings stay in `%APPDATA%\Clicket` (or in the module's folder under SwissTechKnife). Text you type during a recording is stored in that macro, so do not record passwords.
+Clicket watches the keyboard and mouse only to catch its hotkeys and, while you record, to capture what you do. Nothing leaves your computer: macros and settings stay in `%APPDATA%\Clicket` (or in the module's folder under SwissTechKnife). Text you type during a recording is stored in that macro, so do not record passwords. Image steps look at the screen only while they run, in memory; only the picture you captured is saved in the macro.
 
 ## For developers
 

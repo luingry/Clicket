@@ -1,6 +1,6 @@
 {
   "id": "clicket",
-  "version": "1.0.3",
+  "version": "1.1.2",
   "entryAssembly": "Clicket.Module.dll",
   "entryType": "Clicket.Module.ClicketModule",
   "sdkVersion": 1,
@@ -8,6 +8,15 @@
   "loadMode": "memory",
   "window": true,
   "releaseNotes": [
+    {
+      "version": "1.1.2",
+      "notes": [
+        "Image block: waits for a picture on screen, optionally clicks it, then runs the steps inside it, with a threshold, a check interval and an optional time limit.",
+        "Capture the picture by dragging around it on screen, paste it from the clipboard or open a file, and test the match before running.",
+        "Run log window: the last 60 seconds of a macro's execution, live, step by step.",
+        "The mouse wheel no longer scrolls far too much with smooth-scrolling tools, high-resolution wheels or touchpads."
+      ]
+    },
     {
       "version": "1.0.3",
       "notes": [

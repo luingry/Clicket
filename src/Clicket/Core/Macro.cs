@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 
 namespace Clicket.Core;
 
-public enum StepKind { Key, Mouse, Path, Text, Delay, LoopStart, LoopEnd, Command, Open, Script }
+public enum StepKind { Key, Mouse, Path, Text, Delay, LoopStart, LoopEnd, Command, Open, Script, ImageStart, ImageEnd }
 
 /// <summary>A value the user set for one of a script's parameters.</summary>
 [DataContract]
@@ -200,6 +200,36 @@ public sealed class Step
         var existing = ArgList.Find(a => a != null && string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
         if (existing != null) existing.Value = value;
         else ArgList.Add(new ScriptArg { Name = name, Value = value });
+    }
+
+    // Image block: the picture to look for (PNG, base64), how alike it must be, and how the search runs.
+    [DataMember(Name = "image", Order = 28, EmitDefaultValue = false)] public string? ImageData { get; set; }
+    [DataMember(Name = "threshold", Order = 29, EmitDefaultValue = false)] private int ThresholdValue { get; set; }
+    [DataMember(Name = "clickImage", Order = 30, EmitDefaultValue = false)] public bool ClickImage { get; set; }
+    [DataMember(Name = "interval", Order = 31, EmitDefaultValue = false)] private int IntervalValue { get; set; }
+    [DataMember(Name = "timeout", Order = 32, EmitDefaultValue = false)] private int TimeoutValue { get; set; }
+
+    public const int DefaultThreshold = 90, DefaultIntervalMs = 250, MinIntervalMs = 10;
+
+    /// <summary>How alike the screen must be to the picture, 1–100 % (unset reads as 90 %).</summary>
+    public int Threshold
+    {
+        get => ThresholdValue <= 0 ? DefaultThreshold : Math.Min(100, ThresholdValue);
+        set => ThresholdValue = Math.Max(1, Math.Min(100, value));
+    }
+
+    /// <summary>Wait between two searches while the picture is not on screen; at least 10 ms, so a search never spins a core.</summary>
+    public int IntervalMs
+    {
+        get => IntervalValue <= 0 ? DefaultIntervalMs : Math.Max(MinIntervalMs, Math.Min(86_400_000, IntervalValue));
+        set => IntervalValue = Math.Max(MinIntervalMs, Math.Min(86_400_000, value));
+    }
+
+    /// <summary>Gives up and skips the block after this long without a match; 0 keeps searching until the macro stops.</summary>
+    public int TimeoutMs
+    {
+        get => Math.Max(0, Math.Min(86_400_000, TimeoutValue));
+        set => TimeoutValue = Math.Max(0, Math.Min(86_400_000, value));
     }
 
     public Modifiers Modifiers

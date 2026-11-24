@@ -26,6 +26,11 @@ internal sealed class MacroRunner
     private readonly InputSender _sender = new InputSender();
     private readonly Random _random = new Random();
     private readonly Dictionary<Step, List<PathPoint>> _paths = new Dictionary<Step, List<PathPoint>>();
+    private readonly Dictionary<Step, ImageMatcher?> _matchers = new Dictionary<Step, ImageMatcher?>();
+    private readonly RunLog _log;
+    private ScreenCapture? _capture;
+    private int _currentIndex = -1;
+    private Step? _currentStep;
     private Thread? _thread;
 
     /// <param name="passes">How many times the whole list runs; 0 repeats until cancelled.</param>
@@ -36,6 +41,7 @@ internal sealed class MacroRunner
         _passes = passes;
         _startDelayMs = startDelayMs;
         _releaseFirst = releaseFirst;
+        _log = RunLogs.For(macro.Id);
     }
 
     public string MacroId => _macro.Id;
@@ -65,11 +71,13 @@ internal sealed class MacroRunner
             stats = waiter;
             InputSender.TakeStats();
             if (_startDelayMs > 0 && !waiter.Wait(TimeSpan.FromMilliseconds(_startDelayMs))) return;
+            _log.Add(RunEventKind.Started, value: _passes);
             ReleaseHeldModifiers();
             var program = MacroProgram.Build(_macro.Steps, out var error);
             if (error >= 0)
             {
-                Log.Warn("Macro '" + _macro.Name + "' has an unmatched loop at step " + (error + 1) + "; not played.");
+                Log.Warn("Macro '" + _macro.Name + "' has an unmatched block at step " + (error + 1) + "; not played.");
+                _log.Add(RunEventKind.Warning, error, _macro.Steps[error], "Unmatched");
                 return;
             }
             var oneMs = Stopwatch.Frequency / 1000;
@@ -86,12 +94,15 @@ internal sealed class MacroRunner
         catch (Exception e)
         {
             Log.Error("Macro '" + _macro.Name + "' failed.", e);
+            _log.Add(RunEventKind.Warning, _currentIndex, _currentStep, e.GetType().Name + ": " + e.Message);
         }
         finally
         {
             try { _sender.ReleaseAll(); }
             catch (Exception e) { Log.Error("Release after run failed.", e); }
+            _capture?.Dispose();
             LogRun(started, passes, stats);
+            _log.Add(RunEventKind.Finished, value: (int)Math.Min(int.MaxValue, passes));
             Finished?.Invoke(this);
         }
     }
@@ -163,7 +174,19 @@ internal sealed class MacroRunner
                     loops.Push((top.Start, top.Remaining < 0 ? -1 : top.Remaining - 1, Stopwatch.GetTimestamp()));
                     i = top.Start;
                     break;
+                case StepKind.ImageStart:
+                    _currentIndex = i;
+                    _currentStep = step;
+                    if (!SearchImage(step, i, waiter, out var found)) return false;
+                    // Not found before the time limit: the block's steps are skipped.
+                    if (!found) i = program.Partner[i];
+                    break;
+                case StepKind.ImageEnd:
+                    break;
                 default:
+                    _currentIndex = i;
+                    _currentStep = step;
+                    _log.Add(RunEventKind.Step, i, step);
                     if (!Perform(step, waiter)) return false;
                     break;
             }
@@ -214,6 +237,91 @@ internal sealed class MacroRunner
             default:
                 return true;
         }
+    }
+
+    /// <summary>
+    /// Looks for the step's picture on every monitor, again after each interval, until it shows up, the time limit passes or
+    /// the run is cancelled (false). On a match it clicks the picture's centre when asked; <paramref name="found"/> tells the
+    /// caller whether to run the block's steps.
+    /// </summary>
+    private bool SearchImage(Step step, int index, PreciseWaiter waiter, out bool found)
+    {
+        found = false;
+        if (!_matchers.TryGetValue(step, out var matcher))
+        {
+            var picture = ImageCodec.Decode(step.ImageData);
+            matcher = picture == null ? null : new ImageMatcher(picture);
+            _matchers[step] = matcher;
+        }
+        if (matcher == null)
+        {
+            _log.Add(RunEventKind.Warning, index, step, "NoPicture");
+            return true;
+        }
+
+        var threshold = step.Threshold / 100.0;
+        var started = Stopwatch.GetTimestamp();
+        var captureFailed = false;
+        while (true)
+        {
+            if (_cancel.WaitOne(0)) return false;
+            var searchStart = Stopwatch.GetTimestamp();
+            ImageMatch match;
+            int left = 0, top = 0;
+            try
+            {
+                _capture ??= new ScreenCapture();
+                var screen = _capture.Grab();
+                left = _capture.Left;
+                top = _capture.Top;
+                match = matcher.Find(screen, threshold);
+                captureFailed = false;
+            }
+            catch (Exception e) when (e is Win32Exception || e is InvalidOperationException)
+            {
+                // The secure desktop (UAC, lock screen) cannot be captured; it counts as a miss, reported once per streak.
+                if (!captureFailed) Warn("Screen capture failed", e.Message);
+                captureFailed = true;
+                match = new ImageMatch(false, 0, 0, 0);
+            }
+            var searchMs = (int)((Stopwatch.GetTimestamp() - searchStart) * 1000 / Stopwatch.Frequency);
+            var x = left + match.X + matcher.Width / 2;
+            var y = top + match.Y + matcher.Height / 2;
+
+            if (match.Found)
+            {
+                _log.Add(RunEventKind.ImageFound, index, step, step.ClickImage ? "Click" : null, match.Score, x, y, searchMs);
+                if (step.ClickImage)
+                {
+                    InputSender.MoveTo(x, y);
+                    InputSender.ButtonTap(MouseButton.Left, 1);
+                }
+                found = true;
+                return true;
+            }
+            _log.Add(RunEventKind.ImageMissed, index, step, null, match.Score, x, y, searchMs);
+
+            var waitMs = (long)step.IntervalMs;
+            if (step.TimeoutMs > 0)
+            {
+                var elapsed = (Stopwatch.GetTimestamp() - started) * 1000 / Stopwatch.Frequency;
+                var remainingMs = step.TimeoutMs - elapsed;
+                if (remainingMs <= 0)
+                {
+                    _log.Add(RunEventKind.ImageTimeout, index, step, null, match.Score, value: step.TimeoutMs);
+                    return true;
+                }
+                waitMs = Math.Min(waitMs, remainingMs);
+            }
+            if (!waiter.Wait(TimeSpan.FromMilliseconds(Math.Max(1, waitMs)))) return false;
+        }
+    }
+
+    /// <summary>A problem worth knowing about: in the diagnostic file and in the macro's own run log.</summary>
+    private void Warn(string what, string reason)
+    {
+        Log.Warn(what + " in macro '" + _macro.Name + "': " + reason);
+        _log.Add(RunEventKind.Warning, _currentIndex, _currentStep, reason);
     }
 
     private bool PerformMouse(Step step, PreciseWaiter waiter)
@@ -349,7 +457,7 @@ internal sealed class MacroRunner
         }
         catch (Exception e) when (e is Win32Exception || e is InvalidOperationException || e is FileNotFoundException)
         {
-            Log.Warn("Command failed in macro '" + _macro.Name + "': " + e.GetType().Name + " " + e.Message);
+            Warn("Command failed", e.GetType().Name + " " + e.Message);
             return true;
         }
     }
@@ -372,7 +480,7 @@ internal sealed class MacroRunner
         }
         catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
         {
-            Log.Warn("Script could not be written in macro '" + _macro.Name + "': " + e.GetType().Name);
+            Warn("Script could not be written", e.GetType().Name);
             return true;
         }
 
@@ -411,7 +519,7 @@ internal sealed class MacroRunner
         }
         catch (Exception e) when (e is Win32Exception || e is InvalidOperationException || e is FileNotFoundException)
         {
-            Log.Warn("Script failed in macro '" + _macro.Name + "': " + e.GetType().Name + " " + e.Message);
+            Warn("Script failed", e.GetType().Name + " " + e.Message);
             TryDelete(path);
             return true;
         }
@@ -453,7 +561,7 @@ internal sealed class MacroRunner
         }
         catch (Exception e) when (e is Win32Exception || e is InvalidOperationException || e is FileNotFoundException)
         {
-            Log.Warn("Open failed in macro '" + _macro.Name + "': " + e.GetType().Name + " " + e.Message);
+            Warn("Open failed", e.GetType().Name + " " + e.Message);
         }
     }
 
