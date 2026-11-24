@@ -21,6 +21,7 @@ internal static class Snapshot
         Capture(directory, "main" + suffix + ".png", MainOf(window => window.SelectForSnapshot(0, 2)));
         Capture(directory, "main-path" + suffix + ".png", MainOf(window => window.SelectForSnapshot(2, 1)));
         Capture(directory, "main-text" + suffix + ".png", MainOf(window => window.SelectForSnapshot(1, 0)));
+        Capture(directory, "main-loop" + suffix + ".png", MainOf(window => window.SelectForSnapshot(0, 0)));
         Capture(directory, "main-click" + suffix + ".png", MainOf(window =>
         {
             window.SelectForSnapshot(0, 3);

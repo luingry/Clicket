@@ -1,6 +1,6 @@
 {
   "id": "clicket",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "entryAssembly": "Clicket.Module.dll",
   "entryType": "Clicket.Module.ClicketModule",
   "sdkVersion": 1,
@@ -8,6 +8,12 @@
   "loadMode": "memory",
   "window": true,
   "releaseNotes": [
+    {
+      "version": "1.0.2",
+      "notes": [
+        "Loops have a pause between rounds, 1 ms at minimum."
+      ]
+    },
     {
       "version": "1.0.1",
       "notes": [

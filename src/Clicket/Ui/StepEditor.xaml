@@ -101,6 +101,9 @@
             <StackPanel x:Name="LoopPanel">
                 <TextBlock Style="{StaticResource Label}" Text="{ui:Loc LoopCount}" />
                 <TextBox x:Name="LoopCountBox" TextChanged="OnLoopCountChanged" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc LoopPause}" />
+                <TextBox x:Name="LoopPauseBox" TextChanged="OnLoopPauseChanged" LostKeyboardFocus="OnLoopPauseBlur" />
+                <TextBlock Style="{StaticResource Text.Paragraph}" FontSize="{StaticResource Type.Caption}" Text="{ui:Loc LoopPauseHint}" Margin="{StaticResource Space.Gap.TopSm}" />
             </StackPanel>
             <StackPanel x:Name="LoopEndPanel">
                 <TextBlock Style="{StaticResource Text.Paragraph}" Text="{ui:Loc LoopEndInfo}" Margin="{StaticResource Space.Gap.TopLg}" />

@@ -106,6 +106,7 @@ public partial class StepEditor : UserControl
                     break;
                 case StepKind.LoopStart:
                     LoopCountBox.Text = step.Count.ToString(CultureInfo.InvariantCulture);
+                    LoopPauseBox.Text = step.LoopPauseMs.ToString(CultureInfo.InvariantCulture);
                     break;
                 case StepKind.Command:
                     CommandBox.Text = step.Command ?? "";
@@ -264,6 +265,17 @@ public partial class StepEditor : UserControl
     private void OnLoopCountChanged(object sender, TextChangedEventArgs e)
     {
         if (TryInt(LoopCountBox, 0, 1_000_000, out var count)) Apply(s => s.Count = count, "loop");
+    }
+
+    /// <summary>Below 1 ms is accepted while typing ("0" on the way to "05") but stored as 1, the minimum.</summary>
+    private void OnLoopPauseChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TryInt(LoopPauseBox, 0, 86_400_000, out var ms)) Apply(s => s.LoopPauseMs = ms, "looppause");
+    }
+
+    private void OnLoopPauseBlur(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
+    {
+        if (_item?.Step.Kind == StepKind.LoopStart) LoopPauseBox.Text = _item.Step.LoopPauseMs.ToString(CultureInfo.InvariantCulture);
     }
 
     private void OnCommandChanged(object sender, TextChangedEventArgs e) => Apply(s => s.Command = CommandBox.Text, "command");

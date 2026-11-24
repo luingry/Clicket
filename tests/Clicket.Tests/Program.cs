@@ -263,7 +263,8 @@ internal static class Program
             new Step { Kind = StepKind.Path, PathData = PathCodec.Encode(new[] { new PathPoint(0, 0, 1000), new PathPoint(1, 1, 250_000) }) },
             new Step { Kind = StepKind.Delay, Ms = 100, MsMax = 300 },
         };
-        Check(MacroProgram.EstimateMillis(steps) == 300 + 250 + 200, "estimate multiplies loops, adds paths and averages random delays");
+        Check(MacroProgram.EstimateMillis(steps) == 300 + 2 + 250 + 200, "estimate multiplies loops, adds their pauses and paths, and averages random delays");
+        Check(new Step { Kind = StepKind.LoopStart }.LoopPauseMs == 1 && new Step { Kind = StepKind.LoopStart, LoopPauseMs = 0 }.LoopPauseMs == 1, "a loop pauses at least 1 ms between rounds");
         steps[0].Count = 0;
         Check(MacroProgram.EstimateMillis(steps) == null, "an endless loop has no estimate");
     }

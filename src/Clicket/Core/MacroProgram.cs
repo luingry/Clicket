@@ -92,7 +92,7 @@ public sealed class MacroProgram
                     if (step.Count <= 0) return null;
                     var inner = Estimate(program, i + 1, end);
                     if (inner == null) return null;
-                    total += inner.Value * step.Count;
+                    total += inner.Value * step.Count + (long)step.LoopPauseMs * (step.Count - 1);
                     i = end;
                     break;
             }

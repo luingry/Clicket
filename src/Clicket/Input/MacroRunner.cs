@@ -143,9 +143,8 @@ internal sealed class MacroRunner
     /// <summary>One pass; false when cancelled.</summary>
     private bool Execute(MacroProgram program, PreciseWaiter waiter)
     {
-        // (start index, repeats left after this one or -1 for forever, timestamp of the iteration start)
+        // (start index, repeats left after this one or -1 for forever, timestamp of the round start)
         var loops = new Stack<(int Start, int Remaining, long Began)>();
-        var oneMs = Stopwatch.Frequency / 1000;
         for (var i = 0; i < program.Steps.Count; i++)
         {
             if (_cancel.WaitOne(0)) return false;
@@ -159,8 +158,8 @@ internal sealed class MacroRunner
                     if (loops.Count == 0) break;
                     var top = loops.Pop();
                     if (top.Remaining == 0) break;
-                    // An endless loop with nothing that takes time would flood the input queue and spin a core.
-                    if (top.Remaining < 0 && Stopwatch.GetTimestamp() - top.Began < oneMs && !waiter.Wait(TimeSpan.FromMilliseconds(1))) return false;
+                    // The loop's own pause between rounds (at least 1 ms), so even a loop of instant steps never floods input or spins a core.
+                    if (!waiter.Wait(TimeSpan.FromMilliseconds(program.Steps[top.Start].LoopPauseMs))) return false;
                     loops.Push((top.Start, top.Remaining < 0 ? -1 : top.Remaining - 1, Stopwatch.GetTimestamp()));
                     i = top.Start;
                     break;

@@ -68,7 +68,7 @@ Step types:
 | Movement | A recorded mouse path, replayed point by point; optionally from wherever the pointer is |
 | Text | Types any text, in any language, emoji included |
 | Delay | Waits a set time, or a random time within a range |
-| Loop | Repeats the steps inside it a number of times, or until stopped |
+| Loop | Repeats the steps inside it a number of times, or until stopped, with a pause between rounds (1 ms at minimum) |
 | Command | Runs a command line in Command Prompt or PowerShell, optionally hidden and waiting for it |
 | Open | Opens a file, folder, program or web address |
 | Script | Runs your own PowerShell script; whatever its `param()` block declares becomes fields in the editor (text, numbers, on/off, lists), so you adjust it without touching the code |

@@ -56,6 +56,8 @@ public static class StepFormatter
         {
             case StepKind.Delay:
                 return step.MsMax > step.Ms ? Strings.Duration(step.Ms) + " – " + Strings.Duration(step.MsMax) : Strings.Duration(step.Ms);
+            case StepKind.LoopStart:
+                return Strings.Format("LoopPauseTiming", Strings.Duration(step.LoopPauseMs));
             case StepKind.Path:
             case StepKind.Text:
                 var ms = Millis(step);

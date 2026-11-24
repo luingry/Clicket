@@ -252,6 +252,13 @@ public sealed class Step
     public static Step MouseStep(MouseAction action, MouseButton button = MouseButton.Left) =>
         new Step { Kind = StepKind.Mouse, MouseAction = action, Button = button };
 
+    /// <summary>Pause after each round of a loop (stored in <c>ms</c> on the loop start); never below 1 ms, so a loop can't flood input.</summary>
+    public int LoopPauseMs
+    {
+        get => Math.Max(1, Ms);
+        set => Ms = Math.Max(1, Math.Min(86_400_000, value));
+    }
+
     public static Step DelayStep(int ms) => new Step { Kind = StepKind.Delay, Ms = Math.Max(0, ms) };
 }
 
