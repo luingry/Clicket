@@ -1,0 +1,143 @@
+<UserControl x:Class="Clicket.Ui.StepEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Clicket.Ui">
+    <UserControl.Resources>
+        <Style TargetType="TextBlock" x:Key="Label" BasedOn="{StaticResource Field.Label}" />
+    </UserControl.Resources>
+    <Grid>
+        <TextBlock x:Name="EmptyText" Style="{StaticResource Text.Paragraph}" Text="{ui:Loc InspectorEmpty}" Foreground="{StaticResource Brush.Text.Tertiary}" />
+
+        <StackPanel x:Name="Body" Visibility="Collapsed">
+            <!-- Header: the family glyph and the step's place in the macro -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="GlyphChip" Width="36" Height="36" CornerRadius="{StaticResource Radius.Md}">
+                    <TextBlock x:Name="GlyphText" Style="{StaticResource Text.Icon}" FontSize="16" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="StepNumber" Style="{StaticResource Text.Overline}" />
+                    <TextBlock x:Name="KindTitle" Style="{StaticResource Text.Subtitle}" Margin="0,2,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Keyboard -->
+            <StackPanel x:Name="KeyPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Key}" />
+                <ui:KeyCaptureBox x:Name="KeyBox" AllowModifierOnly="True" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Action}" />
+                <ui:Segmented x:Name="KeyActionSelector" Keys="KeyPress,KeyDown,KeyUp" />
+            </StackPanel>
+
+            <!-- Mouse -->
+            <StackPanel x:Name="MousePanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Action}" />
+                <ComboBox x:Name="MouseActionBox" SelectionChanged="OnMouseActionChanged" />
+                <StackPanel x:Name="ButtonRow">
+                    <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Button}" />
+                    <ComboBox x:Name="ButtonBox" SelectionChanged="OnButtonChanged" />
+                </StackPanel>
+                <StackPanel x:Name="PositionRow">
+                    <TextBlock x:Name="PositionLabel" Style="{StaticResource Label}" Text="{ui:Loc Position}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="XBox" ui:UiProps.Placeholder="X" TextChanged="OnPositionChanged" />
+                        <TextBox x:Name="YBox" Grid.Column="2" ui:UiProps.Placeholder="Y" TextChanged="OnPositionChanged" />
+                    </Grid>
+                    <Button x:Name="PickButton" Style="{StaticResource Button.Secondary}" ui:UiProps.Icon="{StaticResource Glyph.Target}" Content="{ui:Loc PickPosition}"
+                            Margin="{StaticResource Space.Gap.Top}" Click="OnPick" />
+                </StackPanel>
+                <StackPanel x:Name="ScrollRow">
+                    <TextBlock x:Name="NotchesLabel" Style="{StaticResource Label}" Text="{ui:Loc Notches}" />
+                    <TextBox x:Name="NotchesBox" TextChanged="OnNotchesChanged" />
+                    <CheckBox x:Name="HorizontalBox" Content="{ui:Loc Horizontal}" Margin="{StaticResource Space.Gap.Top}" Click="OnHorizontalChanged" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Recorded movement -->
+            <StackPanel x:Name="PathPanel">
+                <TextBlock x:Name="PathInfo" Style="{StaticResource Text.Secondary}" Margin="{StaticResource Space.Gap.TopLg}" />
+                <ui:Switch x:Name="RelativeSwitch" Style="{StaticResource Switch}" Margin="{StaticResource Space.Gap.TopLg}" Click="OnRelativeChanged">
+                    <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc PathRelative}" TextWrapping="Wrap" TextTrimming="None" />
+                </ui:Switch>
+                <TextBlock Style="{StaticResource Text.Paragraph}" Text="{ui:Loc PathRelativeHint}" FontSize="{StaticResource Type.Caption}" Margin="{StaticResource Space.Gap.TopSm}" />
+            </StackPanel>
+
+            <!-- Text -->
+            <StackPanel x:Name="TextPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Text}" />
+                <TextBox x:Name="TextField" Style="{StaticResource TextBox.Multiline}" ui:UiProps.Placeholder="{ui:Loc TextPlaceholder}" TextChanged="OnTextChanged" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc CharDelay}" />
+                <TextBox x:Name="CharDelayBox" TextChanged="OnCharDelayChanged" />
+            </StackPanel>
+
+            <!-- Delay -->
+            <StackPanel x:Name="DelayPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Duration}" />
+                <TextBox x:Name="DelayBox" TextChanged="OnDelayChanged" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc RandomUpTo}" />
+                <TextBox x:Name="DelayMaxBox" TextChanged="OnDelayChanged" />
+                <TextBlock Style="{StaticResource Text.Paragraph}" Text="{ui:Loc RandomHint}" FontSize="{StaticResource Type.Caption}" Margin="{StaticResource Space.Gap.TopSm}" />
+            </StackPanel>
+
+            <!-- Loop -->
+            <StackPanel x:Name="LoopPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc LoopCount}" />
+                <TextBox x:Name="LoopCountBox" TextChanged="OnLoopCountChanged" />
+            </StackPanel>
+            <StackPanel x:Name="LoopEndPanel">
+                <TextBlock Style="{StaticResource Text.Paragraph}" Text="{ui:Loc LoopEndInfo}" Margin="{StaticResource Space.Gap.TopLg}" />
+            </StackPanel>
+
+            <!-- Command -->
+            <StackPanel x:Name="CommandPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc CommandLine}" />
+                <TextBox x:Name="CommandBox" Style="{StaticResource TextBox.Multiline}" MinHeight="64" ui:UiProps.Placeholder="{ui:Loc CommandPlaceholder}" TextChanged="OnCommandChanged" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Shell}" />
+                <ui:Segmented x:Name="ShellSelector" Keys="ShellCmd,ShellPowerShell" />
+                <ui:Switch x:Name="WaitSwitch" Style="{StaticResource Switch}" Margin="{StaticResource Space.Gap.TopLg}" Click="OnCommandFlagsChanged">
+                    <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc WaitFinish}" />
+                </ui:Switch>
+                <ui:Switch x:Name="HiddenSwitch" Style="{StaticResource Switch}" Margin="{StaticResource Space.Gap.Top}" Click="OnCommandFlagsChanged">
+                    <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc RunHidden}" />
+                </ui:Switch>
+            </StackPanel>
+
+            <!-- Open -->
+            <StackPanel x:Name="OpenPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc OpenTarget}" />
+                <TextBox x:Name="TargetBox" ui:UiProps.Placeholder="{ui:Loc OpenPlaceholder}" TextChanged="OnOpenChanged" />
+                <Button Style="{StaticResource Button.Secondary}" ui:UiProps.Icon="{StaticResource Glyph.Folder}" Content="{ui:Loc Browse}" Margin="{StaticResource Space.Gap.Top}" Click="OnBrowse" />
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Arguments}" />
+                <TextBox x:Name="ArgumentsBox" TextChanged="OnOpenChanged" />
+            </StackPanel>
+
+            <!-- Script: the code, then the fields its param() block declares -->
+            <StackPanel x:Name="ScriptPanel">
+                <TextBlock Style="{StaticResource Label}" Text="{ui:Loc ScriptCode}" />
+                <TextBox x:Name="ScriptBox" Style="{StaticResource TextBox.Multiline}" MinHeight="140" MaxHeight="280" FontSize="{StaticResource Type.Caption}" FontFamily="{StaticResource Font.Code}"
+                         ui:UiProps.Placeholder="{ui:Loc ScriptPlaceholder}" TextChanged="OnScriptChanged" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
+                <TextBlock Style="{StaticResource Text.Overline}" Text="{ui:Loc ScriptParams}" Margin="0,20,0,2" />
+                <TextBlock x:Name="ScriptParamsHint" Style="{StaticResource Text.Paragraph}" FontSize="{StaticResource Type.Caption}" />
+                <StackPanel x:Name="ScriptFields" />
+                <ui:Switch x:Name="ScriptWaitSwitch" Style="{StaticResource Switch}" Margin="{StaticResource Space.Gap.TopLg}" Click="OnScriptFlagsChanged">
+                    <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc WaitFinish}" />
+                </ui:Switch>
+                <ui:Switch x:Name="ScriptHiddenSwitch" Style="{StaticResource Switch}" Margin="{StaticResource Space.Gap.Top}" Click="OnScriptFlagsChanged">
+                    <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc RunHidden}" />
+                </ui:Switch>
+            </StackPanel>
+
+            <!-- Note -->
+            <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Note}" Margin="0,20,0,6" />
+            <TextBox x:Name="NoteBox" ui:UiProps.Placeholder="{ui:Loc NotePlaceholder}" TextChanged="OnNoteChanged" MaxLength="80" />
+        </StackPanel>
+    </Grid>
+</UserControl>

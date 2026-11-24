@@ -1,0 +1,199 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    mc:Ignorable="po">
+    <!-- Clicket design tokens (docs/DESIGN_SYSTEM.md). Warm SwissTechKnife surfaces, one cricket-green accent,
+         and one hue per step family so a macro's rhythm reads at a glance. -->
+
+    <!-- Surfaces: tone, not strokes. Canvas is the window; each level up is one step lighter. -->
+    <Color x:Key="Color.Backdrop">#0E0E0D</Color>
+    <Color x:Key="Color.Canvas">#141413</Color>
+    <Color x:Key="Color.Surface1">#1B1A18</Color>
+    <Color x:Key="Color.Surface2">#22211E</Color>
+    <Color x:Key="Color.Surface3">#2A2925</Color>
+    <Color x:Key="Color.Surface4">#33312D</Color>
+    <Color x:Key="Color.Surface5">#3D3B36</Color>
+    <SolidColorBrush x:Key="Brush.Backdrop" Color="{StaticResource Color.Backdrop}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Canvas" Color="{StaticResource Color.Canvas}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Surface1" Color="{StaticResource Color.Surface1}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Surface2" Color="{StaticResource Color.Surface2}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Surface3" Color="{StaticResource Color.Surface3}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Surface4" Color="{StaticResource Color.Surface4}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Surface5" Color="{StaticResource Color.Surface5}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Scrim" Color="#B30E0E0D" po:Freeze="True" />
+    <!-- Almost clear: still catches clicks over every monitor while picking a position. -->
+    <SolidColorBrush x:Key="Brush.PickVeil" Color="#0A000000" po:Freeze="True" />
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="Brush.Text.Primary" Color="#F3F0EA" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#BDB8AE" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#8A857C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.Disabled" Color="#5E5A54" po:Freeze="True" />
+
+    <!-- Accent: cricket green. Marks the main action, the selection and what is playing; nothing else. -->
+    <Color x:Key="Color.Accent">#8FD14F</Color>
+    <Color x:Key="Color.Accent.Soft">#298FD14F</Color>
+    <Color x:Key="Color.AccentDeep">#62A834</Color>
+    <SolidColorBrush x:Key="Brush.Accent" Color="{StaticResource Color.Accent}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Accent.Hover" Color="#A2DE66" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Accent.Pressed" Color="#78B83C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Accent.Soft" Color="{StaticResource Color.Accent.Soft}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Accent.Focus" Color="#738FD14F" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.OnAccent" Color="#13200A" po:Freeze="True" />
+
+    <!-- Meaning: status only -->
+    <Color x:Key="Color.Record">#F0564A</Color>
+    <SolidColorBrush x:Key="Brush.Record" Color="{StaticResource Color.Record}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Record.Soft" Color="#2EF0564A" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Danger" Color="#F0705F" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Danger.Soft" Color="#2EF0705F" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Warning" Color="#E9B44C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Warning.Soft" Color="#2EE9B44C" po:Freeze="True" />
+
+    <!-- Step families: one hue each, used for the step glyph and its timing bar. -->
+    <SolidColorBrush x:Key="Brush.Cat.Key" Color="#8FD14F" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Key.Soft" Color="#248FD14F" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Mouse" Color="#5CC8C0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Mouse.Soft" Color="#245CC8C0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Text" Color="#E9B44C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Text.Soft" Color="#24E9B44C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Delay" Color="#A9A398" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Delay.Soft" Color="#1FA9A398" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Loop" Color="#B394F0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Loop.Soft" Color="#24B394F0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Command" Color="#F09A5C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Command.Soft" Color="#24F09A5C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Script" Color="#E57DB4" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Script.Soft" Color="#24E57DB4" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Open" Color="#6FA8F0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Cat.Open.Soft" Color="#246FA8F0" po:Freeze="True" />
+
+    <!-- Interaction -->
+    <SolidColorBrush x:Key="Brush.Overlay.Hover" Color="#0FFFFFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Overlay.Pressed" Color="#1AFFFFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Overlay.Darken" Color="#1A000000" po:Freeze="True" />
+    <sys:Double x:Key="Opacity.Disabled">0.45</sys:Double>
+
+    <!-- Type: one text family, the icon font for glyphs -->
+    <FontFamily x:Key="Font.Text">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="Font.Display">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <!-- Code only (script steps): fixed width keeps indentation readable. -->
+    <FontFamily x:Key="Font.Code">Cascadia Mono, Consolas</FontFamily>
+    <FontFamily x:Key="Font.Icon">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <sys:Double x:Key="Type.Overline">11</sys:Double>
+    <sys:Double x:Key="Type.Caption">12</sys:Double>
+    <sys:Double x:Key="Type.Body">13</sys:Double>
+    <sys:Double x:Key="Type.Subtitle">15</sys:Double>
+    <sys:Double x:Key="Type.Title">20</sys:Double>
+    <sys:Double x:Key="Type.Display">24</sys:Double>
+    <sys:Double x:Key="Type.Icon">14</sys:Double>
+    <sys:Double x:Key="Type.IconLarge">18</sys:Double>
+
+    <!-- Space: 4 px grid -->
+    <Thickness x:Key="Space.Page">24,20,24,20</Thickness>
+    <Thickness x:Key="Space.Pane">16</Thickness>
+    <Thickness x:Key="Space.Card">16</Thickness>
+    <Thickness x:Key="Space.Control">12,0</Thickness>
+    <Thickness x:Key="Space.ControlSm">10,0</Thickness>
+    <Thickness x:Key="Space.Row">10,0,12,0</Thickness>
+    <Thickness x:Key="Space.Menu">6</Thickness>
+    <Thickness x:Key="Space.MenuItem">12,0</Thickness>
+    <Thickness x:Key="Space.ShadowRoom">24,16,24,32</Thickness>
+    <Thickness x:Key="Space.Gap.Top">0,12,0,0</Thickness>
+    <Thickness x:Key="Space.Gap.TopSm">0,6,0,0</Thickness>
+    <Thickness x:Key="Space.Gap.TopLg">0,20,0,0</Thickness>
+    <Thickness x:Key="Space.Gap.Right">0,0,8,0</Thickness>
+    <Thickness x:Key="Space.Gap.Left">8,0,0,0</Thickness>
+    <Thickness x:Key="Space.Chip">8,2</Thickness>
+    <Thickness x:Key="Space.Indent">18,0,0,0</Thickness>
+    <sys:Double x:Key="Space.IndentStep">18</sys:Double>
+    <sys:Double x:Key="Space.Gap">8</sys:Double>
+
+    <!-- Radius: pill is half the height -->
+    <CornerRadius x:Key="Radius.Sm">6</CornerRadius>
+    <CornerRadius x:Key="Radius.Md">8</CornerRadius>
+    <CornerRadius x:Key="Radius.Lg">12</CornerRadius>
+    <CornerRadius x:Key="Radius.Xl">16</CornerRadius>
+    <CornerRadius x:Key="Radius.Chip">9</CornerRadius>
+    <CornerRadius x:Key="Radius.Switch">11</CornerRadius>
+    <CornerRadius x:Key="Radius.Bar">2</CornerRadius>
+
+    <!-- Size -->
+    <sys:Double x:Key="Size.TitleBar">40</sys:Double>
+    <sys:Double x:Key="Size.Control.Sm">28</sys:Double>
+    <sys:Double x:Key="Size.Control">34</sys:Double>
+    <sys:Double x:Key="Size.Control.Lg">40</sys:Double>
+    <sys:Double x:Key="Size.Row">40</sys:Double>
+    <sys:Double x:Key="Size.LibraryRow">54</sys:Double>
+    <sys:Double x:Key="Size.Library">264</sys:Double>
+    <sys:Double x:Key="Size.Inspector">316</sys:Double>
+    <sys:Double x:Key="Size.Glyph">26</sys:Double>
+    <sys:Double x:Key="Size.Tile">64</sys:Double>
+    <sys:Double x:Key="Size.TimingBar">96</sys:Double>
+    <sys:Double x:Key="Size.TimingBarHeight">4</sys:Double>
+    <sys:Double x:Key="Size.SwitchWidth">40</sys:Double>
+    <sys:Double x:Key="Size.SwitchHeight">22</sys:Double>
+    <sys:Double x:Key="Size.SwitchKnob">14</sys:Double>
+    <sys:Double x:Key="Size.SwitchTravel">18</sys:Double>
+    <sys:Double x:Key="Size.SwitchTravelBack">-18</sys:Double>
+    <Thickness x:Key="Size.SwitchKnobInset">4,0</Thickness>
+    <sys:Double x:Key="Size.ScrollBar">10</sys:Double>
+    <sys:Double x:Key="Size.Dot">8</sys:Double>
+    <sys:Double x:Key="Size.MenuMinWidth">200</sys:Double>
+    <sys:Double x:Key="Size.SettingsWidth">460</sys:Double>
+    <sys:Double x:Key="Size.PadWidth">220</sys:Double>
+    <sys:Double x:Key="Size.AppIcon">56</sys:Double>
+    <sys:Double x:Key="Size.IconStroke">1.6</sys:Double>
+
+    <!-- Motion -->
+    <Duration x:Key="Motion.Fast">0:0:0.12</Duration>
+    <Duration x:Key="Motion.Normal">0:0:0.2</Duration>
+    <Duration x:Key="Motion.Slow">0:0:0.28</Duration>
+    <Duration x:Key="Motion.Pulse">0:0:0.9</Duration>
+    <CubicEase x:Key="Motion.Ease" EasingMode="EaseOut" po:Freeze="True" />
+    <QuarticEase x:Key="Motion.Emphasized" EasingMode="EaseOut" po:Freeze="True" />
+    <SineEase x:Key="Motion.InOut" EasingMode="EaseInOut" po:Freeze="True" />
+
+    <!-- Elevation: floating layers only -->
+    <DropShadowEffect x:Key="Elevation.Popup" BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.5" Color="#000000" RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="Elevation.Overlay" BlurRadius="40" ShadowDepth="12" Direction="270" Opacity="0.55" Color="#000000" RenderingBias="Performance" po:Freeze="True" />
+    <DropShadowEffect x:Key="Elevation.Knob" BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.35" Color="#000000" RenderingBias="Performance" po:Freeze="True" />
+
+    <!-- Glyphs (Segoe Fluent Icons) -->
+    <sys:String x:Key="Glyph.Key">&#xE765;</sys:String>
+    <sys:String x:Key="Glyph.Mouse">&#xE962;</sys:String>
+    <sys:String x:Key="Glyph.Path">&#xE7C9;</sys:String>
+    <sys:String x:Key="Glyph.Text">&#xE8D2;</sys:String>
+    <sys:String x:Key="Glyph.Delay">&#xE916;</sys:String>
+    <sys:String x:Key="Glyph.Loop">&#xE8EE;</sys:String>
+    <sys:String x:Key="Glyph.Command">&#xE756;</sys:String>
+    <sys:String x:Key="Glyph.Open">&#xE8A7;</sys:String>
+    <sys:String x:Key="Glyph.Script">&#xE943;</sys:String>
+    <sys:String x:Key="Glyph.Play">&#xE768;</sys:String>
+    <sys:String x:Key="Glyph.Stop">&#xE71A;</sys:String>
+    <sys:String x:Key="Glyph.Record">&#xE7C8;</sys:String>
+    <sys:String x:Key="Glyph.Add">&#xE710;</sys:String>
+    <sys:String x:Key="Glyph.Delete">&#xE74D;</sys:String>
+    <sys:String x:Key="Glyph.Up">&#xE70E;</sys:String>
+    <sys:String x:Key="Glyph.Down">&#xE70D;</sys:String>
+    <sys:String x:Key="Glyph.Copy">&#xE8C8;</sys:String>
+    <sys:String x:Key="Glyph.More">&#xE712;</sys:String>
+    <sys:String x:Key="Glyph.Settings">&#xE713;</sys:String>
+    <sys:String x:Key="Glyph.Search">&#xE721;</sys:String>
+    <sys:String x:Key="Glyph.Pad">&#xE80A;</sys:String>
+    <sys:String x:Key="Glyph.Pin">&#xE718;</sys:String>
+    <sys:String x:Key="Glyph.Close">&#xE8BB;</sys:String>
+    <sys:String x:Key="Glyph.Minimize">&#xE921;</sys:String>
+    <sys:String x:Key="Glyph.Maximize">&#xE922;</sys:String>
+    <sys:String x:Key="Glyph.Restore">&#xE923;</sys:String>
+    <sys:String x:Key="Glyph.Target">&#xE81D;</sys:String>
+    <sys:String x:Key="Glyph.Folder">&#xE838;</sys:String>
+    <sys:String x:Key="Glyph.Import">&#xE8B5;</sys:String>
+    <sys:String x:Key="Glyph.Export">&#xEDE1;</sys:String>
+    <sys:String x:Key="Glyph.Warning">&#xE7BA;</sys:String>
+    <sys:String x:Key="Glyph.Keyboard">&#xE92E;</sys:String>
+    <sys:String x:Key="Glyph.Wrap">&#xE8AB;</sys:String>
+    <sys:String x:Key="Glyph.Undo">&#xE7A7;</sys:String>
+</ResourceDictionary>

@@ -1,0 +1,21 @@
+{
+  "id": "clicket",
+  "version": "1.0.0",
+  "entryAssembly": "Clicket.Module.dll",
+  "entryType": "Clicket.Module.ClicketModule",
+  "sdkVersion": 1,
+  "activation": "startup",
+  "loadMode": "memory",
+  "window": true,
+  "releaseNotes": [
+    {
+      "version": "1.0.0",
+      "notes": [
+        "First release: record, build and replay keyboard and mouse macros with global hotkeys.",
+        "Mouse movement is recorded sample by sample and replays on its original clock.",
+        "Script steps run your own PowerShell, with its parameters shown as fields in the editor.",
+        "Runs in its own process, started with SwissTechKnife, so nothing in the host can delay a macro."
+      ]
+    }
+  ]
+}

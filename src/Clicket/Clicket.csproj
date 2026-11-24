@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Clicket</RootNamespace>
+    <AssemblyName>Clicket</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('..\..\assets\clicket.ico')">..\..\assets\clicket.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+</Project>

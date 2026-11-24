@@ -1,0 +1,82 @@
+<UserControl x:Class="Clicket.Ui.SettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Clicket.Ui">
+    <Grid>
+        <Border x:Name="Scrim" Background="{StaticResource Brush.Scrim}" MouseLeftButtonDown="OnScrimClick" />
+        <Border x:Name="Card" Width="{StaticResource Size.SettingsWidth}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24"
+                Background="{StaticResource Brush.Surface2}" CornerRadius="{StaticResource Radius.Xl}" Effect="{StaticResource Elevation.Overlay}" RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform><ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1" /></Border.RenderTransform>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid Margin="24,18,12,4">
+                    <TextBlock Style="{StaticResource Text.Title}" Text="{ui:Loc Settings}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource Button.Icon}" HorizontalAlignment="Right" ui:UiProps.Icon="{StaticResource Glyph.Close}" ToolTip="{ui:Loc Close}" Click="OnClose" />
+                </Grid>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="620" Padding="24,0,24,22">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Text.Overline}" Text="{ui:Loc General}" Margin="0,14,0,10" />
+                        <TextBlock Style="{StaticResource Text.Caption}" Text="{ui:Loc Language}" Margin="0,0,0,6" />
+                        <ComboBox x:Name="LanguageBox" SelectionChanged="OnLanguageChanged" />
+                        <ui:Switch x:Name="StartupSwitch" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="OnStartupChanged">
+                            <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc StartWithWindows}" />
+                        </ui:Switch>
+                        <ui:Switch x:Name="HideSwitch" Style="{StaticResource Switch}" Margin="0,12,0,0" Click="OnHideChanged">
+                            <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc HideOnClose}" TextWrapping="Wrap" TextTrimming="None" />
+                        </ui:Switch>
+                        <TextBlock x:Name="HostedNote" Style="{StaticResource Text.Paragraph}" Text="{ui:Loc HostedNote}" FontSize="{StaticResource Type.Caption}" Margin="0,12,0,0" />
+
+                        <TextBlock Style="{StaticResource Text.Overline}" Text="{ui:Loc Hotkeys}" Margin="0,26,0,10" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="190" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc StopAllHotkey}" VerticalAlignment="Center" />
+                            <ui:KeyCaptureBox x:Name="StopHotkeyBox" Grid.Column="1" AllowMouse="True" />
+                            <TextBlock Grid.Row="2" Style="{StaticResource Text.Body}" Text="{ui:Loc RecordHotkey}" VerticalAlignment="Center" />
+                            <ui:KeyCaptureBox x:Name="RecordHotkeyBox" Grid.Row="2" Grid.Column="1" AllowMouse="True" />
+                        </Grid>
+                        <TextBlock x:Name="HotkeyError" Style="{StaticResource Text.Caption}" Foreground="{StaticResource Brush.Warning}" Text="{ui:Loc HotkeySame}" Margin="0,8,0,0" Visibility="Collapsed" />
+
+                        <TextBlock Style="{StaticResource Text.Overline}" Text="{ui:Loc RecordingSection}" Margin="0,26,0,10" />
+                        <ui:Switch x:Name="ButtonsSwitch" Style="{StaticResource Switch}" Click="OnRecordingChanged">
+                            <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc RecordButtons}" />
+                        </ui:Switch>
+                        <ui:Switch x:Name="MovementSwitch" Style="{StaticResource Switch}" Margin="0,12,0,0" Click="OnRecordingChanged">
+                            <TextBlock Style="{StaticResource Text.Body}" Text="{ui:Loc RecordMovement}" />
+                        </ui:Switch>
+                        <TextBlock Style="{StaticResource Text.Caption}" Text="{ui:Loc Delays}" Margin="0,16,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <ui:Segmented x:Name="DelaysSelector" Keys="DelaysRecorded,DelaysFixed,DelaysNone" VerticalAlignment="Center" />
+                            <StackPanel x:Name="FixedDelayPanel" Orientation="Horizontal" Margin="12,0,0,0">
+                                <TextBox x:Name="FixedDelayBox" Width="72" TextChanged="OnFixedDelayChanged" />
+                                <TextBlock Style="{StaticResource Text.Secondary}" Text="ms" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource Text.Overline}" Text="{ui:Loc About}" Margin="0,26,0,10" />
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Image x:Name="AppIcon" Width="32" Height="32" />
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource Text.BodyStrong}" Text="Clicket" />
+                                    <TextBlock x:Name="VersionText" Style="{StaticResource Text.Caption}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Style="{StaticResource Button.Ghost}" HorizontalAlignment="Right" ui:UiProps.Icon="{StaticResource Glyph.Folder}" Content="{ui:Loc OpenDataFolder}" Click="OnOpenData" />
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

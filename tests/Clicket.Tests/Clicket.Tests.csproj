@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\Clicket\Core\*.cs" Link="Core\%(Filename)%(Extension)" />
+    <Compile Include="..\..\src\Clicket\Native\NativeMethods.cs" Link="Native\NativeMethods.cs" />
+    <Compile Include="..\..\src\Clicket\Input\PreciseWaiter.cs" Link="Input\PreciseWaiter.cs" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+</Project>
