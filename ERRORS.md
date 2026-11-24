@@ -46,3 +46,9 @@
 
 - **Cause:** `EnableRaisingEvents` before the `Exited` handler, and the handler disposing the process the runner was waiting on.
 - **Fix:** waiting runs own the process and clean up themselves; non-waiting runs attach `Exited` first.
+
+## Click macro capped at ~65 CPS and slowing toward 35 (user report, 1.0.0)
+
+- **Evidence:** every editor-built click/press held the button for a fixed 15 ms before releasing, so one click per pass could never exceed ~66/s. A probe ruled out timer throttling in the background: a windowless process outside the agent package kept 67 waits/s of 15 ms for 20 s, with and without the power-throttling opt-out.
+- **Fix (1.0.1):** presses and clicks are instant by default (down and up in one `SendInput` call, as AutoHotkey's SendInput mode does), with a per-step "Hold time (ms)". Unlimited runs are still capped at one pass per millisecond.
+- **Not yet explained:** the decline from 65 to 35. Deduction only: something on the machine slowing `SendInput` (another app's low-level hook) or the CPS page itself. Each run now logs its rate, `SendInput` average/max and wait lateness to `clicket.log`; read that line from a slow run before changing anything else.

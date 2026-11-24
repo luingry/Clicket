@@ -26,17 +26,28 @@ internal sealed class PreciseWaiter : IDisposable
         _handles = new[] { cancel, _timer };
     }
 
+    /// <summary>Completed waits and how late they woke, for the per-run log line.</summary>
+    public long Waits { get; private set; }
+    public long LateTicks { get; private set; }
+    public long MaxLateTicks { get; private set; }
+
     /// <summary>False when cancelled before the deadline.</summary>
     public bool WaitUntil(long deadlineTicks)
     {
         while (true)
         {
             var remaining = deadlineTicks - Stopwatch.GetTimestamp();
-            if (remaining <= 0) return !_handles[0].WaitOne(0);
+            if (remaining <= 0)
+            {
+                if (_handles[0].WaitOne(0)) return false;
+                Record(-remaining);
+                return true;
+            }
             if (remaining <= SpinTicks)
             {
                 if (_handles[0].WaitOne(0)) return false;
                 while (Stopwatch.GetTimestamp() < deadlineTicks) Thread.SpinWait(20);
+                Record(Stopwatch.GetTimestamp() - deadlineTicks);
                 return true;
             }
             // Wake a little early and spin the rest; 100 ns units, negative means relative.
@@ -54,6 +65,13 @@ internal sealed class PreciseWaiter : IDisposable
     public bool Wait(TimeSpan duration) => WaitUntil(Stopwatch.GetTimestamp() + (long)(duration.TotalSeconds * Stopwatch.Frequency));
 
     public void Dispose() => _timer.Dispose();
+
+    private void Record(long late)
+    {
+        Waits++;
+        LateTicks += late;
+        if (late > MaxLateTicks) MaxLateTicks = late;
+    }
 
     private sealed class TimerHandle : WaitHandle
     {

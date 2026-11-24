@@ -15,8 +15,7 @@ namespace Clicket.Input;
 /// </summary>
 internal sealed class MacroRunner
 {
-    /// <summary>Hold time for a press or click built in the editor; games miss a down and up sent in the same instant.</summary>
-    private static readonly TimeSpan TapHold = TimeSpan.FromMilliseconds(15);
+    /// <summary>Gap between the two clicks of a double click when the step holds each click for a while.</summary>
     private static readonly TimeSpan DoubleClickGap = TimeSpan.FromMilliseconds(45);
 
     private readonly Macro _macro;
@@ -56,10 +55,15 @@ internal sealed class MacroRunner
 
     private void Run()
     {
+        var started = Stopwatch.GetTimestamp();
+        var passes = 0L;
+        PreciseWaiter? stats = null;
         try
         {
             NativeMethods.UsePhysicalPixels();
             using var waiter = new PreciseWaiter(_cancel);
+            stats = waiter;
+            InputSender.TakeStats();
             if (_startDelayMs > 0 && !waiter.Wait(TimeSpan.FromMilliseconds(_startDelayMs))) return;
             ReleaseHeldModifiers();
             var program = MacroProgram.Build(_macro.Steps, out var error);
@@ -73,6 +77,7 @@ internal sealed class MacroRunner
             {
                 var began = Stopwatch.GetTimestamp();
                 if (!Execute(program, waiter)) return;
+                passes++;
                 // A repeating macro of instant steps would flood the input queue and spin a core: at most one pass per millisecond.
                 if (program.Steps.Count == 0 && !waiter.Wait(TimeSpan.FromMilliseconds(50))) return;
                 if (_passes != 1 && Stopwatch.GetTimestamp() - began < oneMs && !waiter.Wait(TimeSpan.FromMilliseconds(1))) return;
@@ -86,7 +91,34 @@ internal sealed class MacroRunner
         {
             try { _sender.ReleaseAll(); }
             catch (Exception e) { Log.Error("Release after run failed.", e); }
+            LogRun(started, passes, stats);
             Finished?.Invoke(this);
+        }
+    }
+
+    /// <summary>
+    /// One line per run: rate, how long SendInput blocked (other apps' hooks delay every injected event) and how late the
+    /// waits woke. When playback is slower than expected, this line says where the time went.
+    /// </summary>
+    private void LogRun(long started, long passes, PreciseWaiter? waiter)
+    {
+        try
+        {
+            var seconds = (Stopwatch.GetTimestamp() - started) / (double)Stopwatch.Frequency;
+            var send = InputSender.TakeStats();
+            double Ms(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
+            var line = string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "Run '{0}': {1:0.00} s, {2} passes, {3} input events in {4} calls ({5:0.0}/s); SendInput avg {6:0.000} ms, max {7:0.000} ms",
+                _macro.Name, seconds, passes, send.Events, send.Calls, seconds > 0 ? send.Events / seconds : 0,
+                send.Calls > 0 ? Ms(send.Ticks) / send.Calls : 0, Ms(send.MaxTicks));
+            if (waiter != null && waiter.Waits > 0)
+                line += string.Format(System.Globalization.CultureInfo.InvariantCulture, "; waits {0}, late avg {1:0.000} ms, max {2:0.000} ms",
+                    waiter.Waits, Ms(waiter.LateTicks) / waiter.Waits, Ms(waiter.MaxLateTicks));
+            Log.Info(line);
+        }
+        catch (Exception e)
+        {
+            Log.Error("Run statistics failed.", e);
         }
     }
 
@@ -152,9 +184,14 @@ internal sealed class MacroRunner
                     default:
                         if (step.Key == 0) return true;
                         var mods = ModifierKeys(step.Modifiers);
+                        if (step.HoldMs == 0)
+                        {
+                            InputSender.KeyTap(step.Key, step.Scan, step.Extended, mods);
+                            return true;
+                        }
                         foreach (var mod in mods) _sender.Key(mod, 0, false, false);
                         _sender.Key(step.Key, step.Scan, step.Extended, false);
-                        var held = waiter.Wait(TapHold);
+                        var held = waiter.Wait(TimeSpan.FromMilliseconds(step.HoldMs));
                         _sender.Key(step.Key, step.Scan, step.Extended, true);
                         for (var m = mods.Count - 1; m >= 0; m--) _sender.Key(mods[m], 0, false, true);
                         return held;
@@ -195,18 +232,28 @@ internal sealed class MacroRunner
                 InputSender.Wheel(step.Amount == 0 ? 120 : step.Amount, step.Horizontal);
                 return true;
             case MouseAction.DoubleClick:
-                if (!Click(step.Button, waiter)) return false;
+                if (step.HoldMs == 0)
+                {
+                    InputSender.ButtonTap(step.Button, 2);
+                    return true;
+                }
+                if (!Click(step.Button, step.HoldMs, waiter)) return false;
                 if (!waiter.Wait(DoubleClickGap)) return false;
-                return Click(step.Button, waiter);
+                return Click(step.Button, step.HoldMs, waiter);
             default:
-                return Click(step.Button, waiter);
+                if (step.HoldMs == 0)
+                {
+                    InputSender.ButtonTap(step.Button, 1);
+                    return true;
+                }
+                return Click(step.Button, step.HoldMs, waiter);
         }
     }
 
-    private bool Click(MouseButton button, PreciseWaiter waiter)
+    private bool Click(MouseButton button, int holdMs, PreciseWaiter waiter)
     {
         _sender.Button(button, false);
-        var held = waiter.Wait(TapHold);
+        var held = waiter.Wait(TimeSpan.FromMilliseconds(holdMs));
         _sender.Button(button, true);
         return held;
     }

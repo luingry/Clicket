@@ -1,6 +1,6 @@
 {
   "id": "clicket",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "entryAssembly": "Clicket.Module.dll",
   "entryType": "Clicket.Module.ClicketModule",
   "sdkVersion": 1,
@@ -8,6 +8,14 @@
   "loadMode": "memory",
   "window": true,
   "releaseNotes": [
+    {
+      "version": "1.0.1",
+      "notes": [
+        "Key presses and clicks are instant by default, like AutoHotkey, with an optional hold time for games.",
+        "Recording starts with no hotkey, so it never conflicts with other apps; pick one in Settings.",
+        "Pointing at a macro in the list shows a trash button; click it twice to delete."
+      ]
+    },
     {
       "version": "1.0.0",
       "notes": [

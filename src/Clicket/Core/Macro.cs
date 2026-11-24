@@ -166,6 +166,18 @@ public sealed class Step
     /// <summary>Modifiers held around a key press built in the editor (Ctrl + S as one step).</summary>
     [DataMember(Name = "mods", Order = 24, EmitDefaultValue = false)] private int ModsValue { get; set; }
 
+    /// <summary>
+    /// How long a press or click built in the editor holds before releasing, in ms. 0 (the default) sends down and up
+    /// in one SendInput call, as AutoHotkey does; some games need 10–30 ms to notice a press.
+    /// </summary>
+    [DataMember(Name = "hold", Order = 27, EmitDefaultValue = false)] private int HoldValue { get; set; }
+
+    public int HoldMs
+    {
+        get => Math.Max(0, Math.Min(10000, HoldValue));
+        set => HoldValue = Math.Max(0, Math.Min(10000, value));
+    }
+
     /// <summary>PowerShell source of a script step; its param() block defines the fields the editor shows.</summary>
     [DataMember(Name = "script", Order = 25, EmitDefaultValue = false)] public string? Script { get; set; }
 

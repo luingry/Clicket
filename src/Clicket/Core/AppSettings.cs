@@ -11,7 +11,14 @@ public sealed class AppSettings
     public const string LanguageAuto = "auto";
 
     public static readonly Hotkey DefaultStopHotkey = new Hotkey(Vk.End, Modifiers.Ctrl | Modifiers.Alt);
-    public static readonly Hotkey DefaultRecordHotkey = new Hotkey('R', Modifiers.Ctrl | Modifiers.Alt);
+    /// <summary>Recording has no hotkey until the user picks one, so Clicket never takes a combination another app already uses.</summary>
+    public static readonly Hotkey DefaultRecordHotkey = default;
+
+    /// <summary>The record hotkey 1.0.0 shipped with; settings saved by that version still carry it and are cleared once.</summary>
+    private static readonly Hotkey LegacyRecordHotkey = new Hotkey(0x52, Modifiers.Ctrl | Modifiers.Alt);
+
+    /// <summary>Settings format: 2 since 1.0.1 (record hotkey empty by default).</summary>
+    private const int CurrentFormat = 2;
 
     private int _fixedDelay = 50;
 
@@ -50,6 +57,7 @@ public sealed class AppSettings
     public static AppSettings Parse(string text)
     {
         var s = new AppSettings();
+        var fileFormat = 1;
         foreach (var line in text.Split('\r', '\n'))
         {
             var separator = line.IndexOf('=');
@@ -62,6 +70,7 @@ public sealed class AppSettings
                 case "hideOnClose": if (TryBool(value, out var hide)) s.HideOnClose = hide; break;
                 case "stopHotkey": s.StopHotkey = value.Length == 0 ? default : Hotkey.Parse(value); break;
                 case "recordHotkey": s.RecordHotkey = value.Length == 0 ? default : Hotkey.Parse(value); break;
+                case "format": if (TryInt(value, out var format)) fileFormat = format; break;
                 case "recordButtons": if (TryBool(value, out var buttons)) s.RecordButtons = buttons; break;
                 case "recordMovement": if (TryBool(value, out var movement)) s.RecordMovement = movement; break;
                 case "recordDelays": if (Enum.TryParse<DelayMode>(value, true, out var delays)) s.RecordDelays = delays; break;
@@ -76,6 +85,8 @@ public sealed class AppSettings
                 case "windowMaximized": if (TryBool(value, out var max)) s.WindowMaximized = max; break;
             }
         }
+        // 1.0.0 saved its default record hotkey like a choice; nobody picked it, so it is cleared once.
+        if (fileFormat < CurrentFormat && s.RecordHotkey == LegacyRecordHotkey) s.RecordHotkey = default;
         return s;
     }
 
@@ -83,6 +94,7 @@ public sealed class AppSettings
     {
         var pairs = new List<KeyValuePair<string, string>>
         {
+            Pair("format", Int(CurrentFormat)),
             Pair("language", Language),
             Pair("hideOnClose", Bool(HideOnClose)),
             Pair("stopHotkey", StopHotkey.Serialize()),

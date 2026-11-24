@@ -48,7 +48,9 @@ The installer has no digital signature yet, so Windows may show a SmartScreen wa
 
 | To... | Do this |
 |---|---|
-| Record a macro | Press **Record** (or **Ctrl + Alt + R** anywhere), do the actions, then press **Stop** or the same keys again |
+| Record a macro | Press **Record**, do the actions, then press **Stop**. To record from anywhere, pick a recording hotkey in Settings (none by default, so nothing clashes with your other apps) |
+| Click as fast as possible | Clicks and key presses are instant by default, like AutoHotkey; set **Hold time** on the step if a game needs to see the press held |
+| Delete a macro | Point at it in the list and click the trash twice |
 | Build one by hand | Press **New**, then click the tiles under **Insert**: each step goes after the selected one |
 | Give it a hotkey | Click the **Hotkey** field and press the keys (a mouse side button works too) |
 | Test it | Press **Play**: it starts after 3 seconds, so you can switch to the target window |

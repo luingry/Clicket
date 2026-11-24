@@ -22,15 +22,7 @@ internal sealed class InputSender
 
     public void Key(int vk, int scan, bool extended, bool up)
     {
-        // A recorded key carries its scan code and extended flag (numpad keys with NumLock off differ from the
-        // navigation block only by that flag); a key built in the editor has no scan code and takes the usual flag.
-        if (scan == 0)
-        {
-            scan = (int)NativeMethods.MapVirtualKey((uint)vk, 0); // MAPVK_VK_TO_VSC
-            extended = extended || Vk.IsExtended(vk);
-        }
-        var flags = (up ? NativeMethods.KeyeventfKeyUp : 0) | (extended ? NativeMethods.KeyeventfExtendedKey : 0);
-        Send(KeyInput((ushort)vk, (ushort)scan, flags));
+        Send(KeyEvent(vk, ref scan, ref extended, up));
         if (up)
         {
             _heldKeys.Remove(vk);
@@ -56,6 +48,67 @@ internal sealed class InputSender
 
     public void Button(MouseButton button, bool up)
     {
+        Send(ButtonEvent(button, up));
+        if (up) _heldButtons.Remove(button);
+        else _heldButtons.Add(button);
+    }
+
+    /// <summary>
+    /// Instant clicks, as AutoHotkey sends them: every down and up in a single SendInput call, so nothing else can
+    /// interleave and nothing is ever left held. <paramref name="count"/> 2 is a double click.
+    /// </summary>
+    public static void ButtonTap(MouseButton button, int count)
+    {
+        var inputs = new NativeMethods.Input[count * 2];
+        for (var i = 0; i < count; i++)
+        {
+            inputs[i * 2] = ButtonEvent(button, false);
+            inputs[i * 2 + 1] = ButtonEvent(button, true);
+        }
+        Send(inputs);
+    }
+
+    /// <summary>An instant key press with its modifiers, in one call: modifiers down, key down, key up, modifiers up.</summary>
+    public static void KeyTap(int vk, int scan, bool extended, IReadOnlyList<int> modifiers)
+    {
+        var inputs = new NativeMethods.Input[2 + modifiers.Count * 2];
+        var n = 0;
+        foreach (var mod in modifiers)
+        {
+            int s = 0;
+            var e = false;
+            inputs[n++] = KeyEvent(mod, ref s, ref e, false);
+        }
+        int keyScan = scan;
+        var keyExtended = extended;
+        inputs[n++] = KeyEvent(vk, ref keyScan, ref keyExtended, false);
+        inputs[n++] = KeyEvent(vk, ref keyScan, ref keyExtended, true);
+        for (var m = modifiers.Count - 1; m >= 0; m--)
+        {
+            int s = 0;
+            var e = false;
+            inputs[n++] = KeyEvent(modifiers[m], ref s, ref e, true);
+        }
+        Send(inputs);
+    }
+
+    /// <summary>
+    /// A recorded key carries its scan code and extended flag (numpad keys with NumLock off differ from the navigation
+    /// block only by that flag); a key built in the editor has no scan code and takes the usual flag.
+    /// </summary>
+    private static NativeMethods.Input KeyEvent(int vk, ref int scan, ref bool extended, bool up)
+    {
+        if (scan == 0)
+        {
+            scan = (int)NativeMethods.MapVirtualKey((uint)vk, 0); // MAPVK_VK_TO_VSC
+            extended = extended || Vk.IsExtended(vk);
+        }
+        var flags = (up ? NativeMethods.KeyeventfKeyUp : 0) | (extended ? NativeMethods.KeyeventfExtendedKey : 0);
+        return KeyInput((ushort)vk, (ushort)scan, flags);
+    }
+
+    private static NativeMethods.Input ButtonEvent(MouseButton button, bool up)
+    {
         uint flags, data = 0;
         switch (button)
         {
@@ -65,9 +118,7 @@ internal sealed class InputSender
             case MouseButton.X2: flags = up ? NativeMethods.MouseeventfXUp : NativeMethods.MouseeventfXDown; data = 2; break;
             default: flags = up ? NativeMethods.MouseeventfLeftUp : NativeMethods.MouseeventfLeftDown; break;
         }
-        Send(MouseInput(0, 0, data, flags));
-        if (up) _heldButtons.Remove(button);
-        else _heldButtons.Add(button);
+        return MouseInput(0, 0, data, flags);
     }
 
     public static void Wheel(int delta, bool horizontal) =>
@@ -127,10 +178,27 @@ internal sealed class InputSender
         Data = new NativeMethods.InputUnion { Mouse = new NativeMethods.MouseInput { Dx = dx, Dy = dy, MouseData = data, Flags = flags, ExtraInfo = Signature } },
     };
 
+    // Per runner thread: how many calls, events and how long SendInput blocked (it waits for every low-level hook in
+    // the system, so a slow third-party hook shows up here). Logged when a run ends.
+    [ThreadStatic] private static long _calls, _events, _ticks, _maxTicks;
+
+    public static (long Calls, long Events, long Ticks, long MaxTicks) TakeStats()
+    {
+        var stats = (_calls, _events, _ticks, _maxTicks);
+        _calls = _events = _ticks = _maxTicks = 0;
+        return stats;
+    }
+
     private static void Send(params NativeMethods.Input[] inputs)
     {
         if (inputs.Length == 0) return;
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
         var sent = NativeMethods.SendInput((uint)inputs.Length, inputs, InputSize);
+        var took = System.Diagnostics.Stopwatch.GetTimestamp() - started;
+        _calls++;
+        _events += inputs.Length;
+        _ticks += took;
+        if (took > _maxTicks) _maxTicks = took;
         if (sent != inputs.Length) Log.Warn("SendInput delivered " + sent + " of " + inputs.Length + " (error " + Marshal.GetLastWin32Error() + "); input may be blocked by a higher-integrity window.");
     }
 

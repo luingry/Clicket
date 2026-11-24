@@ -30,6 +30,11 @@
                 <ui:KeyCaptureBox x:Name="KeyBox" AllowModifierOnly="True" />
                 <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Action}" />
                 <ui:Segmented x:Name="KeyActionSelector" Keys="KeyPress,KeyDown,KeyUp" />
+                <StackPanel x:Name="KeyHoldRow">
+                    <TextBlock Style="{StaticResource Label}" Text="{ui:Loc HoldTime}" />
+                    <TextBox x:Name="KeyHoldBox" TextChanged="OnHoldChanged" />
+                    <TextBlock Style="{StaticResource Text.Paragraph}" FontSize="{StaticResource Type.Caption}" Text="{ui:Loc HoldHint}" Margin="{StaticResource Space.Gap.TopSm}" />
+                </StackPanel>
             </StackPanel>
 
             <!-- Mouse -->
@@ -39,6 +44,11 @@
                 <StackPanel x:Name="ButtonRow">
                     <TextBlock Style="{StaticResource Label}" Text="{ui:Loc Button}" />
                     <ComboBox x:Name="ButtonBox" SelectionChanged="OnButtonChanged" />
+                </StackPanel>
+                <StackPanel x:Name="MouseHoldRow">
+                    <TextBlock Style="{StaticResource Label}" Text="{ui:Loc HoldTime}" />
+                    <TextBox x:Name="MouseHoldBox" TextChanged="OnHoldChanged" />
+                    <TextBlock Style="{StaticResource Text.Paragraph}" FontSize="{StaticResource Type.Caption}" Text="{ui:Loc HoldHint}" Margin="{StaticResource Space.Gap.TopSm}" />
                 </StackPanel>
                 <StackPanel x:Name="PositionRow">
                     <TextBlock x:Name="PositionLabel" Style="{StaticResource Label}" Text="{ui:Loc Position}" />

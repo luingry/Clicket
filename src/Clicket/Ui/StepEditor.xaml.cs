@@ -28,7 +28,11 @@ public partial class StepEditor : UserControl
             s.Scan = 0;
             s.Extended = Vk.IsExtended(hotkey.Key);
         });
-        KeyActionSelector.SelectionChanged += index => Apply(s => s.KeyAction = (KeyAction)index);
+        KeyActionSelector.SelectionChanged += index =>
+        {
+            Apply(s => s.KeyAction = (KeyAction)index);
+            Show(KeyHoldRow, index == (int)KeyAction.Press);
+        };
         ShellSelector.SelectionChanged += index => Apply(s => s.Shell = (ShellKind)index);
         Strings.LanguageChanged += (s, e) => Dispatcher.BeginInvoke(new Action(() => Load(_item)));
     }
@@ -72,6 +76,8 @@ public partial class StepEditor : UserControl
                 case StepKind.Key:
                     KeyBox.Value = step.Key == 0 ? default : new Hotkey(step.Key, step.KeyAction == KeyAction.Press ? step.Modifiers : Modifiers.None);
                     KeyActionSelector.SelectedIndex = (int)step.KeyAction;
+                    KeyHoldBox.Text = step.HoldMs.ToString(CultureInfo.InvariantCulture);
+                    Show(KeyHoldRow, step.KeyAction == KeyAction.Press);
                     break;
                 case StepKind.Mouse:
                     MouseActionBox.ItemsSource = Array.ConvertAll(MouseActions, a => Strings.Get("Mouse" + a));
@@ -80,6 +86,7 @@ public partial class StepEditor : UserControl
                     ButtonBox.SelectedIndex = Array.IndexOf(Buttons, step.Button);
                     XBox.Text = step.X.ToString(CultureInfo.InvariantCulture);
                     YBox.Text = step.Y.ToString(CultureInfo.InvariantCulture);
+                    MouseHoldBox.Text = step.HoldMs.ToString(CultureInfo.InvariantCulture);
                     NotchesBox.Text = (step.Amount / 120.0).ToString("0.##", CultureInfo.InvariantCulture);
                     HorizontalBox.IsChecked = step.Horizontal;
                     UpdateMouseRows();
@@ -167,6 +174,7 @@ public partial class StepEditor : UserControl
     {
         var action = MouseActionBox.SelectedIndex >= 0 ? MouseActions[MouseActionBox.SelectedIndex] : MouseAction.Click;
         Show(ButtonRow, action <= MouseAction.Up);
+        Show(MouseHoldRow, action == MouseAction.Click || action == MouseAction.DoubleClick);
         Show(PositionRow, action == MouseAction.MoveTo || action == MouseAction.MoveBy);
         Show(PickButton, action == MouseAction.MoveTo);
         Show(ScrollRow, action == MouseAction.Scroll);
@@ -184,6 +192,11 @@ public partial class StepEditor : UserControl
             if (action == MouseAction.Scroll && s.Amount == 0) s.Amount = 120;
         });
         if (!_loading) Load(_item);
+    }
+
+    private void OnHoldChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TryInt((TextBox)sender, 0, 10000, out var ms)) Apply(s => s.HoldMs = ms, "hold");
     }
 
     private void OnButtonChanged(object sender, SelectionChangedEventArgs e)

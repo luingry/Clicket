@@ -24,7 +24,11 @@
                         <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Summary}" />
                     </StackPanel>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- On hover the status glyphs fade out and the trash fades in, in the same place: nothing moves. -->
+                <Button x:Name="Trash" Grid.Column="1" Style="{StaticResource Button.Icon.Sm}" ui:UiProps.Icon="{StaticResource Glyph.Delete}"
+                        ToolTip="{Binding DeleteTip}" HorizontalAlignment="Right" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False"
+                        Click="OnLibraryTrash" MouseLeave="OnLibraryTrashLeave" />
+                <StackPanel x:Name="Status" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0">
                     <TextBlock Style="{StaticResource Text.Icon}" FontSize="12" Text="{StaticResource Glyph.Pad}" Foreground="{StaticResource Brush.Text.Tertiary}"
                                Margin="0,0,8,0" Visibility="{Binding OnPad, Converter={StaticResource Visible}}" ToolTip="{ui:Loc OnPad}" />
                     <Ellipse x:Name="Dot" Width="{StaticResource Size.Dot}" Height="{StaticResource Size.Dot}" Fill="{StaticResource Brush.Accent}"
@@ -53,6 +57,29 @@
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding HasHotkey}" Value="True">
                     <Setter TargetName="HotkeyLabel" Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                    <Setter TargetName="Trash" Property="IsHitTestVisible" Value="True" />
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="Trash" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Motion.Fast}" EasingFunction="{StaticResource Motion.Ease}" />
+                                <DoubleAnimation Storyboard.TargetName="Status" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Motion.Fast}" EasingFunction="{StaticResource Motion.Ease}" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="Trash" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Motion.Normal}" EasingFunction="{StaticResource Motion.Ease}" />
+                                <DoubleAnimation Storyboard.TargetName="Status" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Motion.Normal}" EasingFunction="{StaticResource Motion.Ease}" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DeleteArmed}" Value="True">
+                    <Setter TargetName="Trash" Property="Foreground" Value="{StaticResource Brush.Danger}" />
+                    <Setter TargetName="Trash" Property="Background" Value="{StaticResource Brush.Danger.Soft}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>

@@ -21,6 +21,12 @@ internal static class Snapshot
         Capture(directory, "main" + suffix + ".png", MainOf(window => window.SelectForSnapshot(0, 2)));
         Capture(directory, "main-path" + suffix + ".png", MainOf(window => window.SelectForSnapshot(2, 1)));
         Capture(directory, "main-text" + suffix + ".png", MainOf(window => window.SelectForSnapshot(1, 0)));
+        Capture(directory, "main-click" + suffix + ".png", MainOf(window =>
+        {
+            window.SelectForSnapshot(0, 3);
+            window.ShowTrashForSnapshot(2, armed: false);
+            window.ShowTrashForSnapshot(4, armed: true);
+        }));
         Capture(directory, "main-script" + suffix + ".png", MainOf(window => window.SelectForSnapshot(3, 0), 1000));
         Capture(directory, "main-settings" + suffix + ".png", MainOf(window =>
         {
@@ -30,7 +36,7 @@ internal static class Snapshot
         app.Library = new List<Macro>();
         Capture(directory, "main-empty" + suffix + ".png", MainOf(window => { }));
         app.Library = SampleLibrary();
-        Capture(directory, "recording" + suffix + ".png", new RecordingBar(AppSettings.DefaultRecordHotkey));
+        Capture(directory, "recording" + suffix + ".png", new RecordingBar(new Hotkey(Vk.F1 + 8, Modifiers.Ctrl)));
         Capture(directory, "pad" + suffix + ".png", new PadWindow());
         Capture(directory, "tray-menu" + suffix + ".png", new TrayMenuWindow());
     }

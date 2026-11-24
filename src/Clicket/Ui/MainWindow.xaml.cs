@@ -167,6 +167,32 @@ public partial class MainWindow : Window
 
     internal void OpenSettings(bool animate = true) => Settings.ShowPanel(animate);
 
+    /// <summary>--snapshot: a library row as it looks under the pointer (no real hover off-screen), optionally armed.</summary>
+    internal void ShowTrashForSnapshot(int row, bool armed)
+    {
+        LibraryList.UpdateLayout();
+        if (row >= _items.Count || !(LibraryList.ItemContainerGenerator.ContainerFromIndex(row) is ListBoxItem container)) return;
+        _items[row].DeleteArmed = armed;
+        var presenter = FindChild<ContentPresenter>(container);
+        if (presenter == null) return;
+        presenter.ApplyTemplate();
+        if (presenter.ContentTemplate.FindName("Trash", presenter) is UIElement trash) trash.Opacity = 1;
+        if (presenter.ContentTemplate.FindName("Status", presenter) is UIElement status) status.Opacity = 0;
+        if (FindChild<System.Windows.Controls.Border>(container) is System.Windows.Controls.Border fill && container.Template.FindName("Hover", container) is UIElement hover) hover.Opacity = 1;
+    }
+
+    private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            var deeper = FindChild<T>(child);
+            if (deeper != null) return deeper;
+        }
+        return null;
+    }
+
     /// <summary>--snapshot: a macro and a step selected, as a user would leave them.</summary>
     internal void SelectForSnapshot(int macro, int step)
     {
@@ -328,7 +354,30 @@ public partial class MainWindow : Window
             return;
         }
         MoreMenu.IsOpen = false;
-        var item = _current;
+        DeleteMacro(_current);
+    }
+
+    /// <summary>The trash shown on hover in the library: the first click arms it (red), the second deletes.</summary>
+    private void OnLibraryTrash(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (!(((FrameworkElement)sender).DataContext is MacroItem item)) return;
+        if (!item.DeleteArmed)
+        {
+            item.DeleteArmed = true;
+            return;
+        }
+        DeleteMacro(item);
+    }
+
+    private void OnLibraryTrashLeave(object sender, MouseEventArgs e)
+    {
+        if (((FrameworkElement)sender).DataContext is MacroItem item) item.DeleteArmed = false;
+    }
+
+    private void DeleteMacro(MacroItem item)
+    {
+        var wasCurrent = item == _current;
         Host.Engine?.Stop(item.Macro.Id);
         var index = _items.IndexOf(item);
         Host.Library.Remove(item.Macro);
@@ -336,6 +385,7 @@ public partial class MainWindow : Window
         _undo.Remove(item.Macro.Id);
         Host.LibraryChanged();
         UpdateLibraryEmpty();
+        if (!wasCurrent) return;
         if (_items.Count > 0) LibraryList.SelectedIndex = Math.Min(index, _items.Count - 1);
         else ShowMacro(null);
     }

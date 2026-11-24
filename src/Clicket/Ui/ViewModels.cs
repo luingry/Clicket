@@ -30,6 +30,17 @@ public sealed class MacroItem : Observable
         set => Set(ref _isRunning, value);
     }
 
+    private bool _deleteArmed;
+
+    /// <summary>The row's trash was clicked once; the next click deletes. Leaving the row disarms it.</summary>
+    public bool DeleteArmed
+    {
+        get => _deleteArmed;
+        set { if (Set(ref _deleteArmed, value)) Raise(nameof(DeleteTip)); }
+    }
+
+    public string DeleteTip => Strings.Get(_deleteArmed ? "ConfirmDelete" : "Delete");
+
     /// <summary>Filtered out by the search box.</summary>
     public bool IsVisible
     {

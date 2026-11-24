@@ -44,7 +44,9 @@ O instalador ainda não tem assinatura digital, então o Windows pode mostrar um
 
 | Para... | Faça isso |
 |---|---|
-| Gravar uma macro | Clique em **Gravar** (ou **Ctrl + Alt + R** em qualquer lugar), faça as ações e clique em **Parar** ou aperte as mesmas teclas de novo |
+| Gravar uma macro | Clique em **Gravar**, faça as ações e clique em **Parar**. Para gravar de qualquer lugar, escolha um atalho de gravação nas Configurações (vem vazio, para não conflitar com seus outros apps) |
+| Clicar o mais rápido possível | Cliques e teclas são instantâneos por padrão, como no AutoHotkey; ajuste **Tempo pressionado** no passo se um jogo precisar perceber o toque |
+| Excluir uma macro | Passe o mouse sobre ela na lista e clique duas vezes na lixeira |
 | Montar à mão | Clique em **Nova** e nos blocos de **Inserir**: cada passo entra depois do selecionado |
 | Dar um atalho | Clique no campo **Atalho** e pressione as teclas (botão lateral do mouse também vale) |
 | Testar | Clique em **Executar**: começa após 3 segundos, para dar tempo de ir para a janela de destino |

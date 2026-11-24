@@ -98,6 +98,11 @@ internal static class Program
         Check(s.FixedDelayMs == 60000, "fixed delay clamps");
         Check(s.HideOnClose, "bad booleans keep the default");
         Check(new AppSettings().StopHotkey == AppSettings.DefaultStopHotkey, "default stop hotkey");
+        Check(new AppSettings().RecordHotkey.IsEmpty, "recording has no hotkey by default");
+        Check(AppSettings.Parse("recordHotkey=3:82").RecordHotkey.IsEmpty, "1.0.0's saved Ctrl+Alt+R default is cleared once");
+        Check(AppSettings.Parse("recordHotkey=3:83").RecordHotkey == new Hotkey('S', Modifiers.Ctrl | Modifiers.Alt), "a hotkey the user picked in 1.0.0 is kept");
+        var picked = new AppSettings { RecordHotkey = new Hotkey('R', Modifiers.Ctrl | Modifiers.Alt) };
+        Check(AppSettings.Parse(picked.Serialize()).RecordHotkey == picked.RecordHotkey, "Ctrl+Alt+R chosen after the migration stays");
     }
 
     private static void FoldersAreNeverEmpty()
@@ -269,6 +274,7 @@ internal static class Program
         var macro = new Macro { Name = "Teste ção", Hotkey = new Hotkey(Vk.F1, Modifiers.Ctrl), Mode = PlayMode.Repeat, RepeatCount = 5, OnPad = true };
         macro.Steps.Add(Step.KeyStep('A', 30, false, KeyAction.Press));
         macro.Steps[0].Modifiers = Modifiers.Shift;
+        macro.Steps[0].HoldMs = 25;
         macro.Steps.Add(new Step { Kind = StepKind.Text, Text = "olá\n🙂" });
         macro.Steps.Add(new Step { Kind = StepKind.Mouse, MouseAction = MouseAction.Scroll, Amount = -240, Horizontal = true });
         macro.Steps.Add(new Step { Kind = StepKind.Command, Command = "echo 1", Shell = ShellKind.PowerShell, Wait = true });
@@ -276,7 +282,8 @@ internal static class Program
         var loaded = MacroStore.Load(path).Single();
         Check(loaded.Id == macro.Id && loaded.Name == "Teste ção", "macro identity and unicode name round-trip");
         Check(loaded.Hotkey == macro.Hotkey && loaded.Mode == PlayMode.Repeat && loaded.RepeatCount == 5 && loaded.OnPad, "trigger settings round-trip");
-        Check(loaded.Steps[0].Modifiers == Modifiers.Shift && loaded.Steps[0].Scan == 30, "key step round-trips");
+        Check(loaded.Steps[0].Modifiers == Modifiers.Shift && loaded.Steps[0].Scan == 30 && loaded.Steps[0].HoldMs == 25, "key step round-trips, hold time included");
+        Check(loaded.Steps[1].HoldMs == 0, "presses and clicks are instant unless a hold time is set");
         Check(loaded.Steps[1].Text == "olá\n🙂", "text keeps newlines and emoji");
         Check(loaded.Steps[2].MouseAction == MouseAction.Scroll && loaded.Steps[2].Amount == -240 && loaded.Steps[2].Horizontal, "scroll round-trips");
         Check(loaded.Steps[3].Shell == ShellKind.PowerShell && loaded.Steps[3].Wait, "command round-trips");
