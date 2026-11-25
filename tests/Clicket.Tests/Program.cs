@@ -25,6 +25,7 @@ internal static class Program
             PathCodecRejectsDamage();
             RecorderCollapsesRepeatsAndDropsStrays();
             RecorderKeepsMotionAsOnePath();
+            RecorderKeepsMotionAlone();
             RecorderWithoutMotionPositionsClicks();
             RecorderDelayModes();
             RecorderStopHotkeyAfterMotion();
@@ -166,7 +167,7 @@ internal static class Program
         builder.Add(Key(RawKind.KeyUp, 'A', 250));
         builder.Add(Key(RawKind.KeyDown, Vk.LControl, 900));  // stop hotkey modifiers
         builder.Add(Key(RawKind.KeyDown, Vk.LMenu, 920));
-        var steps = builder.Finish(dropPendingPath: false);
+        var steps = builder.Finish();
         Check(steps.Count == 3, "down, delay, up survive (got " + steps.Count + ")");
         Check(steps[0].Kind == StepKind.Key && steps[0].KeyAction == KeyAction.Down && steps[0].Key == 'A', "first is A down");
         Check(steps[1].Kind == StepKind.Delay && steps[1].Ms == 150, "held for 150 ms");
@@ -182,16 +183,39 @@ internal static class Program
         builder.Add(Mouse(RawKind.Move, 200, 300, 110_000)); // same point twice: dropped
         builder.Add(Mouse(RawKind.ButtonDown, 200, 300, 150_000));
         builder.Add(Mouse(RawKind.ButtonUp, 200, 300, 230_000));
-        for (var i = 1; i <= 10; i++) builder.Add(Mouse(RawKind.Move, 200 - i, 300, 230_000 + i * 2000)); // trip to the stop button
-        var steps = builder.Finish(dropPendingPath: true);
-        var path = steps.Single(s => s.Kind == StepKind.Path);
-        var samples = PathCodec.Decode(path.PathData);
+        // Motion after the last click, ending on the stop button (x <= 193 stands for "over Clicket's bar").
+        for (var i = 1; i <= 10; i++) builder.Add(Mouse(RawKind.Move, 200 - i, 300, 230_000 + i * 2000));
+        var steps = builder.Finish(trimTrailing: (x, y) => x <= 193);
+        var paths = steps.Where(s => s.Kind == StepKind.Path).ToList();
+        Check(paths.Count == 2, "motion before and after the click are both kept (got " + paths.Count + " paths)");
+        var samples = PathCodec.Decode(paths[0].PathData);
         Check(samples.Count == 100, "every distinct move sample kept (got " + samples.Count + ")");
         Check(samples[0].Micros == 1000 && samples[99].Micros == 100_000, "path time counts from the previous event");
-        var afterPath = steps[steps.IndexOf(path) + 1];
+        var afterPath = steps[steps.IndexOf(paths[0]) + 1];
         Check(afterPath.Kind == StepKind.Delay && afterPath.Ms == 40, "the pause after the motion is a delay (got " + afterPath.Ms + ")");
-        Check(steps.Count(s => s.Kind == StepKind.Path) == 1, "the trip to the stop button is dropped");
-        Check(steps.Last().Kind == StepKind.Mouse && steps.Last().MouseAction == MouseAction.Up, "ends with the button up");
+        var tail = PathCodec.Decode(paths[1].PathData);
+        Check(tail.Count == 6 && tail[tail.Count - 1].X == 194, "only the samples over Clicket are trimmed (got " + tail.Count + ")");
+        Check(steps.Last().Kind == StepKind.Path, "the motion after the last click ends the macro");
+    }
+
+    private static void RecorderKeepsMotionAlone()
+    {
+        var builder = new RecordingBuilder(new RecordingOptions { Movement = true });
+        Check(builder.Count == 0, "nothing recorded yet");
+        for (var i = 0; i < 50; i++) builder.Add(Mouse(RawKind.Move, 10 + i, 20, 500_000 + i * 1000));
+        Check(builder.Count == 1, "motion in progress counts as a step before any click (got " + builder.Count + ")");
+        var steps = builder.Finish(trimTrailing: (x, y) => false);
+        Check(steps.Count == 1 && steps[0].Kind == StepKind.Path, "a movement-only recording stopped from the bar is one path (got " + steps.Count + ")");
+        Check(PathCodec.Decode(steps[0].PathData).Count == 50, "with every sample");
+        Check(PathCodec.Decode(steps[0].PathData)[0].Micros == 0, "the wait before the first motion is not part of the path");
+
+        var onlyOverBar = new RecordingBuilder(new RecordingOptions { Movement = true });
+        onlyOverBar.Add(Mouse(RawKind.Move, 1, 1, 0));
+        Check(onlyOverBar.Finish(trimTrailing: (x, y) => true).Count == 0, "motion only over Clicket records nothing");
+
+        var off = new RecordingBuilder(new RecordingOptions { Movement = false });
+        off.Add(Mouse(RawKind.Move, 1, 1, 0));
+        Check(off.Count == 0 && off.Finish().Count == 0, "motion is ignored when movement recording is off");
     }
 
     private static void RecorderWithoutMotionPositionsClicks()
@@ -200,7 +224,7 @@ internal static class Program
         builder.Add(Mouse(RawKind.Move, 5, 5, 0));
         builder.Add(Mouse(RawKind.ButtonDown, 50, 60, 1000, MouseButton.Right));
         builder.Add(Mouse(RawKind.ButtonUp, 50, 60, 2000, MouseButton.Right));
-        var steps = builder.Finish(false);
+        var steps = builder.Finish();
         Check(steps.Count == 3, "move, down, up (got " + steps.Count + ")");
         Check(steps[0].MouseAction == MouseAction.MoveTo && steps[0].X == 50 && steps[0].Y == 60, "click lands where it happened");
         Check(steps[1].Button == MouseButton.Right && steps[1].MouseAction == MouseAction.Down, "right button down");
@@ -216,7 +240,7 @@ internal static class Program
         builder.Add(Key(RawKind.KeyDown, Vk.LMenu, 520));
         builder.Add(Mouse(RawKind.Move, 301, 400, 530_000));
         builder.Add(Mouse(RawKind.ButtonDown, 301, 400, 540_000)); // a drag released over Clicket: no up recorded
-        var steps = builder.Finish(dropPendingPath: false);
+        var steps = builder.Finish();
         Check(steps[0].Kind == StepKind.Mouse && steps[0].MouseAction == MouseAction.MoveTo && steps[0].X == 300, "a click before any motion is positioned");
         Check(!steps.Any(s => s.Kind == StepKind.Key), "stop-hotkey modifiers are dropped even after motion");
         Check(steps.Count(s => s.Kind == StepKind.Mouse && s.MouseAction == MouseAction.Down) == 1, "an unreleased button down is dropped");
@@ -228,7 +252,7 @@ internal static class Program
         var builder = new RecordingBuilder(new RecordingOptions { Delays = DelayMode.Fixed, FixedDelayMs = 30 });
         builder.Add(Key(RawKind.KeyDown, 'A', 0));
         builder.Add(Key(RawKind.KeyUp, 'A', 999));
-        var steps = builder.Finish(false);
+        var steps = builder.Finish();
         Check(steps.Count == 3 && steps[1].Ms == 30, "fixed delay replaces the recorded one");
 
         var carry = new RecordingBuilder(new RecordingOptions());
@@ -236,7 +260,7 @@ internal static class Program
         carry.Add(new RawEvent { Kind = RawKind.KeyUp, Vk = 'A', Micros = 1500 });
         carry.Add(new RawEvent { Kind = RawKind.KeyDown, Vk = 'B', Micros = 3000 });
         carry.Add(new RawEvent { Kind = RawKind.KeyUp, Vk = 'B', Micros = 4000 });
-        var delays = carry.Finish(false).Where(s => s.Kind == StepKind.Delay).Sum(s => s.Ms);
+        var delays = carry.Finish().Where(s => s.Kind == StepKind.Delay).Sum(s => s.Ms);
         Check(delays == 4, "sub-millisecond remainders carry over instead of drifting (got " + delays + ")");
     }
 

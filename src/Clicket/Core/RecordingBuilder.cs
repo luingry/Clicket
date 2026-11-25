@@ -48,8 +48,8 @@ public sealed class RecordingBuilder
 
     public RecordingBuilder(RecordingOptions options) => _options = options;
 
-    /// <summary>Steps emitted so far (the pending path is not included).</summary>
-    public int Count => _steps.Count;
+    /// <summary>Steps so far, counting the motion in progress as one, so a movement-only recording shows up as it happens.</summary>
+    public int Count => _steps.Count + (_path.Count > 0 ? 1 : 0);
 
     public void Add(RawEvent e)
     {
@@ -85,11 +85,18 @@ public sealed class RecordingBuilder
         }
     }
 
-    /// <summary>The finished step list. <paramref name="dropPendingPath"/> discards motion since the last event (the trip to the stop button).</summary>
-    public List<Step> Finish(bool dropPendingPath)
+    /// <summary>
+    /// The finished step list. Motion since the last click or key is kept: a recording may be motion alone.
+    /// <paramref name="trimTrailing"/> (stopping from Clicket's own bar) drops the trailing samples it accepts, the
+    /// pointer resting over Clicket's windows, without touching the motion made before it.
+    /// </summary>
+    public List<Step> Finish(Func<int, int, bool>? trimTrailing = null)
     {
-        if (dropPendingPath) _path.Clear();
-        else FlushPath();
+        if (trimTrailing != null)
+        {
+            while (_path.Count > 0 && trimTrailing(_path[_path.Count - 1].X, _path[_path.Count - 1].Y)) _path.RemoveAt(_path.Count - 1);
+        }
+        FlushPath();
 
         // Downs never released (the stop hotkey's modifiers, a drag released over Clicket) would leave the macro holding
         // them; each one still held goes, wherever it sits (pointer motion may have landed after it).

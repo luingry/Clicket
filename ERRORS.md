@@ -81,3 +81,10 @@
 - **Evidence (code):** `Engine.Record` drops every key-down while `GetForegroundWindow()` belongs to Clicket and every click or wheel over a Clicket window (so the stop button and the recording bar stay out of the macro). `App.BeginRecording` left the editor in front, only disabled, so typing and clicking went to it and were all dropped until another window took the foreground.
 - **Fix (1.1.3):** `MainWindow.OnRecordingStateChanged(true)` minimizes a visible editor, which hands the foreground to the window underneath; stopping restores the state it had (normal or maximized) before `ShowMainWindow` brings it forward.
 - **Avoid:** any surface that starts a recording must leave the foreground to the target app; a Clicket window in front is a recording that silently discards input.
+
+## Recording without clicks came out empty (user report, 1.1.3: "se eu nao clico em nada a gravacao nao pega nada")
+
+- **Evidence:** the hosted `clicket.log` on 1.1.3 shows `Recording stopped with 0 steps` after a 3 s recording; the user's `settings.ini` has `recordMovement=true` and an empty `recordHotkey`, so every recording is stopped from the bar's Stop button (`fromUi`).
+- **Cause:** motion is held as a pending path until the next click or key, and `Finish(dropPendingPath: fromUi)` threw all of it away as "the trip to the stop button". A movement-only recording, or motion after the last click, never survived a stop from the bar; the bar's counter also excluded the pending path, so it stayed at 0 while the mouse moved. The 1.1.3 fix (minimizing the editor) addressed a real but different filter and did not touch this.
+- **Fix (1.1.4):** `RecordingBuilder.Finish(trimTrailing)` keeps the pending motion and drops only the trailing samples the predicate accepts; `Engine.StopRecording(fromUi)` passes `IsOwnWindowAt`, evaluated while the bar is still open. `Count` includes the motion in progress. Tests: `RecorderKeepsMotionAlone`, `RecorderKeepsMotionAsOnePath`.
+- **Avoid:** read the user's log and settings before shipping a theory; the stop path (bar vs hotkey) changes what a recording keeps.

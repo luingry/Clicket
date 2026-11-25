@@ -125,7 +125,11 @@ internal sealed class Engine : IDisposable
         Log.Info("Recording started.");
     }
 
-    /// <summary>Ends the recording. <paramref name="fromUi"/> drops the motion since the last event: the trip to the stop button.</summary>
+    /// <summary>
+    /// Ends the recording, keeping the motion since the last event (a recording may be motion alone).
+    /// <paramref name="fromUi"/> trims the trailing samples over Clicket's windows: the pointer on the stop button.
+    /// Called while the recording bar is still open, so it is found under those samples.
+    /// </summary>
     public List<Step> StopRecording(bool fromUi)
     {
         List<Step> steps;
@@ -134,7 +138,7 @@ internal sealed class Engine : IDisposable
             DrainLocked();
             lock (_gate)
             {
-                steps = _recorder?.Finish(dropPendingPath: fromUi) ?? new List<Step>();
+                steps = _recorder?.Finish(fromUi ? IsOwnWindowAt : (Func<int, int, bool>?)null) ?? new List<Step>();
                 _recorder = null;
                 ApplyHooks();
             }

@@ -2,6 +2,13 @@
 
 All notable changes to Clicket are recorded here, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, with [semantic versioning](https://semver.org/).
 
+## [1.1.4]
+
+### Fixed
+
+- Recording captures from the first moment, without a click: mouse movement alone now records, and stopping from the bar's Stop button keeps the motion made since the last click or key (only the part resting on the bar is left out). Before, that motion was thrown away, so a recording without clicks came out empty.
+- The step counter on the recording bar rises as soon as the mouse moves.
+
 ## [1.1.3]
 
 ### Fixed
