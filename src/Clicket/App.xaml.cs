@@ -339,8 +339,8 @@ public partial class App : Application
         _recordTarget = null;
         _recordingBar?.Close();
         _recordingBar = null;
+        _window?.OnRecordingStateChanged(false); // restores the editor's own state before it is brought forward
         ShowMainWindow();
-        _window?.OnRecordingStateChanged(false);
         _window?.OnRecordingFinished(target, steps);
     }
 

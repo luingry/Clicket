@@ -589,9 +589,27 @@ public partial class MainWindow : Window
 
     // ======================================================== Recording
 
+    private WindowState? _stateBeforeRecording;
+
+    /// <summary>
+    /// The editor steps aside while recording: the engine ignores keys typed while Clicket is in front and clicks on its
+    /// windows, so a visible editor kept the recording empty until the user clicked another window. Minimizing hands
+    /// the foreground back to the window underneath; stopping restores the editor as it was (maximized stays maximized).
+    /// </summary>
     internal void OnRecordingStateChanged(bool recording)
     {
         IsEnabled = !recording;
+        if (recording)
+        {
+            if (!IsVisible || WindowState == WindowState.Minimized) return;
+            _stateBeforeRecording = WindowState;
+            WindowState = WindowState.Minimized;
+        }
+        else if (_stateBeforeRecording is WindowState before)
+        {
+            _stateBeforeRecording = null;
+            if (WindowState == WindowState.Minimized) WindowState = before;
+        }
     }
 
     internal void OnRecordingFinished(RecordTarget target, List<Step> steps)

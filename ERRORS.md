@@ -75,3 +75,9 @@
 - **Cause:** WPF's `ScrollViewer` scrolls a fixed step per wheel message and ignores `MouseWheelEventArgs.Delta`; smooth-scrolling tools, high-resolution wheels and precision touchpads send many fractional deltas.
 - **Fix (1.1.2):** `Ui/WheelScrolling` (ported from STK) registers a class handler on `ScrollViewer` in `App.OnStartup` that scales the scroll by `Delta / 120`: exact pixels in pixel mode, a carried remainder in item mode; whole notches keep WPF's path. Same probe after the fix: 47.6 px.
 - **Avoid:** every WPF app of this family needs this handler from the start; a probe without a layout pass between messages hides the bug (it showed 48 px before the fix).
+
+## Recording captured nothing until the user clicked outside Clicket (user report, 1.1.2)
+
+- **Evidence (code):** `Engine.Record` drops every key-down while `GetForegroundWindow()` belongs to Clicket and every click or wheel over a Clicket window (so the stop button and the recording bar stay out of the macro). `App.BeginRecording` left the editor in front, only disabled, so typing and clicking went to it and were all dropped until another window took the foreground.
+- **Fix (1.1.3):** `MainWindow.OnRecordingStateChanged(true)` minimizes a visible editor, which hands the foreground to the window underneath; stopping restores the state it had (normal or maximized) before `ShowMainWindow` brings it forward.
+- **Avoid:** any surface that starts a recording must leave the foreground to the target app; a Clicket window in front is a recording that silently discards input.

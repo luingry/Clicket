@@ -2,6 +2,12 @@
 
 All notable changes to Clicket are recorded here, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, with [semantic versioning](https://semver.org/).
 
+## [1.1.3]
+
+### Fixed
+
+- Recording starts right away: the editor now minimizes when you press Record, so the keys and clicks you make in the app underneath are captured without first clicking outside Clicket. Stopping brings the editor back as it was.
+
 ## [1.1.2]
 
 ### Added
